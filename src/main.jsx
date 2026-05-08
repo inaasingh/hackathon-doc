@@ -1,13 +1,15 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import './styles.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-// Start in dark mode by default
-document.documentElement.classList.add("dark");
+import { RouterProvider, createRouter } from "@tanstack/react-router";
+import { routeTree } from "./routeTree.gen";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+import "./styles.css";
+
+const router = createRouter({ routeTree });
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);
