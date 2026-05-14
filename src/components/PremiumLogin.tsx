@@ -104,19 +104,19 @@ const RightPanel = memo(function RightPanel() {
             fontSize: "38px", fontWeight: 900, color: "#ffffff",
             lineHeight: 1.12, letterSpacing: "-1px", margin: 0,
           }}>
-            Ship faster.<br/>
+            Your code ships.<br/>
             <span style={{
               background: "linear-gradient(135deg, #c084fc 0%, #e879f9 50%, #818cf8 100%)",
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
             }}>
-              Govern smarter.
+              The docs write themselves.
             </span>
           </h2>
           <p style={{
             marginTop: "16px", fontSize: "15px",
             color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: "320px",
           }}>
-            One AI-powered command centre for your entire delivery pipeline — from change detection to governance docs.
+            AbsoluteLabs detects every change across your stack and instantly generates governance docs, runbooks, and impact reports — so your team never slows down.
           </p>
         </div>
 
