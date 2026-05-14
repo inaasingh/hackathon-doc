@@ -1,289 +1,164 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
-  Sparkles,
-  RefreshCw,
-  Copy,
-  Download,
-  CheckCheck,
-  Loader2,
+  Sparkles, RefreshCw, Copy, Download, CheckCheck, Loader2,
 } from "lucide-react";
+import { generateGovernanceReport, generateWeeklyReport, generateImpactAnalysis } from "../../lib/claudeApi";
 
-import { motion } from "framer-motion";
+const tabs = ["CR Document", "Governance Summary", "Weekly Report", "Executive Summary", "Health Analysis"];
 
-const tabs = [
-  "CR Document",
-  "Governance Summary",
-  "Weekly Report",
-  "Executive Summary",
-  "Health Analysis",
-];
+const staticContent: Record<string, string> = {
+  "Executive Summary": `## Executive Delivery Summary
 
-const contentMap: Record<string, string> = {
-  "CR Document": `
-## AI Change Impact Analysis
+Enterprise delivery velocity improved by 18% this sprint.
+Automation coverage: 81%
+Governance processing time reduced from 11 hours to 2.4 hours.
+AI-generated documentation count: 128
+Projected annual operational savings: $480,000
+Platform Health: 94.3%`,
 
-Detected enterprise impact across:
+  "Health Analysis": `## Enterprise Integration Health Analysis
 
-• MuleSoft integrations
-• Governance workflows
-• Weekly delivery reporting
-• Executive summaries
-• LLD / HLD documentation
+Jira: Operational
+Azure DevOps: Healthy
+MuleSoft: Minor latency warnings
+Salesforce: Operational
+Zoho: Operational
 
-### AI Recommendations
-
-1. Update retry policies
-2. Trigger governance approval flow
-3. Notify DevOps stakeholders
-4. Regenerate CR documentation
-5. Schedule integration health review
-
-### Risk Assessment
-
-Risk Level: Medium-High
-
-Potential downstream systems impacted:
-
-• Inventory Sync
-• Pricing Engine
-• CRM Sync
-
-### Business Impact
-
-Estimated engineering effort saved:
-~6.5 hours/week
-
-Predicted governance processing reduction:
-~72%
-`,
-
-  "Governance Summary": `
-## Governance Intelligence Summary
-
-RAG STATUS: AMBER
-
-Key Risks:
-• Integration latency spikes
-• Delayed QA signoff
-• MuleSoft dependency issues
-
-Leadership Recommendation:
-Increase monitoring thresholds and
-enable automated rollback workflows.
-
-Compliance Health:
-94.3%
-
-AI Confidence:
-96%
-`,
-
-  "Weekly Report": `
-## Weekly Delivery Governance Report
-
-Completed:
-• 14 Jira stories delivered
-• 3 production deployments
-• 2 governance reviews completed
-
-In Progress:
-• MuleSoft retry optimization
-• Azure DevOps pipeline enhancements
-
-Risks:
-• API timeout issues
-• Delayed UAT signoff
-
-Executive Recommendation:
-Continue phased rollout strategy.
-`,
-
-  "Executive Summary": `
-## Executive Delivery Summary
-
-Enterprise delivery velocity improved
-by 18% this sprint.
-
-Automation coverage:
-81%
-
-Governance processing time reduced
-from 11 hours → 2.4 hours.
-
-AI-generated documentation count:
-128
-
-Projected annual operational savings:
-$480,000
-`,
-
-  "Health Analysis": `
-## Enterprise Health Analysis
-
-Jira:
-Operational
-
-Azure DevOps:
-Healthy
-
-MuleSoft:
-Minor latency warnings
-
-Salesforce:
-Operational
-
-Zoho:
-Operational
-
-Overall platform health:
-94.3%
-
-AI Recommendation:
-Enable proactive alerting for MuleSoft APIs.
-`,
+Overall Platform Health: 94.3%
+AI Recommendation: Enable proactive alerting for MuleSoft APIs.`,
 };
 
-export function AIWorkspace({
-  selectedEvent,
-}: {
-  selectedEvent: any;
-}) {
-  const [activeTab, setActiveTab] =
-    useState("CR Document");
+export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
+  const [activeTab, setActiveTab] = useState("CR Document");
+  const [content,   setContent]   = useState("");
+  const [loading,   setLoading]   = useState(false);
+  const [copied,    setCopied]     = useState(false);
 
-  const [content, setContent] =
-    useState("");
+  // Keep a ref to the latest selectedEvent so the generate function never uses a stale closure
+  const selectedEventRef = useRef(selectedEvent);
+  useEffect(() => { selectedEventRef.current = selectedEvent; }, [selectedEvent]);
 
-  const [loading, setLoading] =
-    useState(false);
+  const handleGenerate = useCallback(async () => {
+    if (staticContent[activeTab]) {
+      setContent(staticContent[activeTab]);
+      return;
+    }
 
-  const [copied, setCopied] =
-    useState(false);
+    const event = selectedEventRef.current ?? {
+      svc: "Order API", source: "MuleSoft", id: "MULE-2391",
+      sev: "critical", summary: "SLA breach detected — p95 latency 1.8s",
+      conf: 96, docs: ["LLD", "Runbook"],
+    };
 
-  useEffect(() => {
-    generateContent();
+    setLoading(true);
+    setContent("");
+
+    try {
+      let result = "";
+      if (activeTab === "CR Document")             result = await generateImpactAnalysis(event);
+      else if (activeTab === "Governance Summary")  result = await generateGovernanceReport([event]);
+      else if (activeTab === "Weekly Report")       result = await generateWeeklyReport([event]);
+      setContent(result);
+    } catch {
+      setContent("Unable to generate content.");
+    }
+
+    setLoading(false);
   }, [activeTab]);
 
-  function generateContent() {
-    setLoading(true);
-
-    setTimeout(() => {
-      setContent(contentMap[activeTab]);
-      setLoading(false);
-    }, 1200);
-  }
+  // Generate once on tab change — no auto-refresh interval (was causing re-render churn every 10s)
+  useEffect(() => {
+    handleGenerate();
+  }, [handleGenerate]);
 
   function handleCopy() {
     navigator.clipboard.writeText(content);
-
     setCopied(true);
-
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   function handleExport() {
-    const blob = new Blob([content], {
-      type: "text/plain",
-    });
-
-    const a = document.createElement("a");
-
-    a.href = URL.createObjectURL(blob);
-
-    a.download = `${activeTab
-      .replace(/\s/g, "-")
-      .toLowerCase()}.txt`;
-
+    const blob = new Blob([content], { type: "text/plain" });
+    const a    = document.createElement("a");
+    a.href     = URL.createObjectURL(blob);
+    a.download = `${activeTab.replace(/\s/g, "-").toLowerCase()}.txt`;
     a.click();
   }
 
   return (
-    <div className="glass rounded-2xl p-5">
-
+    <div
+      className="rounded-2xl p-5 relative z-0 flex flex-col flex-1"
+      style={{
+        background: "var(--card)",
+        border: "1px solid rgba(124,110,245,0.11)",
+        borderRadius: "1rem",
+        boxShadow: "0 1px 4px rgba(124,110,245,0.06)",
+      }}
+    >
       {/* HEADER */}
-
-      <div className="flex items-center justify-between mb-4">
-
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
             AI Generated Output
           </h2>
-
-          <p className="text-xs text-muted-foreground mt-1">
-            Generated using Claude AI · streaming
+          <p className="text-xs text-muted-foreground mt-0.5">
+            AI-generated · updates on tab change
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-
-          {/* GENERATE */}
-
+        <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={generateContent}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium gradient-primary-bg text-primary-foreground"
+            onClick={handleGenerate}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium gradient-primary-bg text-primary-foreground disabled:opacity-50"
           >
-            {loading ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Sparkles className="h-3.5 w-3.5" />
-            )}
-
-            Generate AI Analysis
+            {loading
+              ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              : <Sparkles className="h-3.5 w-3.5" />}
+            {loading ? "Generating..." : "Generate"}
           </button>
 
-          {/* REGENERATE */}
-
           <button
-            onClick={generateContent}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs border border-border bg-card/50 hover:bg-secondary/50"
+            onClick={handleGenerate}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs border border-border bg-card/50 hover:bg-secondary/50 disabled:opacity-50"
           >
             <RefreshCw className="h-3.5 w-3.5" />
             Regenerate
           </button>
 
-          {/* COPY */}
-
           <button
             onClick={handleCopy}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs border border-border bg-card/50 hover:bg-secondary/50"
+            disabled={!content || loading}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs border border-border bg-card/50 hover:bg-secondary/50 disabled:opacity-50"
           >
-            {copied ? (
-              <CheckCheck className="h-3.5 w-3.5 text-green-400" />
-            ) : (
-              <Copy className="h-3.5 w-3.5" />
-            )}
-
+            {copied
+              ? <CheckCheck className="h-3.5 w-3.5 text-green-400" />
+              : <Copy className="h-3.5 w-3.5" />}
             {copied ? "Copied" : "Copy"}
           </button>
 
-          {/* EXPORT */}
-
           <button
             onClick={handleExport}
-            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs gradient-primary-bg text-primary-foreground"
+            disabled={!content || loading}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs gradient-primary-bg text-primary-foreground disabled:opacity-50"
           >
             <Download className="h-3.5 w-3.5" />
             Export
           </button>
-
         </div>
       </div>
 
       {/* TABS */}
-
-      <div className="flex items-center gap-6 border-b border-border mb-4 overflow-x-auto">
-
-        {tabs.map((tab) => (
+      <div className="flex items-center gap-4 border-b border-border mb-4 overflow-x-auto pb-0">
+        {tabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`pb-3 text-sm whitespace-nowrap transition ${
+            className={`pb-3 text-xs whitespace-nowrap transition-colors ${
               activeTab === tab
-                ? "text-primary border-b border-primary"
+                ? "text-primary border-b-2 border-primary font-semibold"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
@@ -293,29 +168,21 @@ export function AIWorkspace({
       </div>
 
       {/* CONTENT */}
-
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-border bg-card/20 p-6 min-h-[600px]"
+      <div
+        className="rounded-xl border border-border p-5 flex-1 overflow-y-auto"
+        style={{ background: "var(--muted)", minHeight: "12rem" }}
       >
-
         {loading ? (
-          <div className="h-[500px] flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-
-            <p className="text-sm">
-              AI is generating enterprise intelligence...
-            </p>
+          <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
+            <Loader2 className="h-7 w-7 animate-spin text-primary" />
+            <p className="text-xs">Generating {activeTab}...</p>
           </div>
         ) : (
-          <pre className="whitespace-pre-wrap text-sm leading-8 text-foreground/90 font-mono">
-            {content}
+          <pre className="whitespace-pre-wrap text-xs leading-6 text-foreground/85 font-sans">
+            {content || "Click Generate to create AI content."}
           </pre>
         )}
-
-      </motion.div>
+      </div>
     </div>
   );
 }

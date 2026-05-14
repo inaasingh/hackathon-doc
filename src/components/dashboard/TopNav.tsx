@@ -1,4 +1,4 @@
-import { Bell, FileBarChart, Presentation, Brain, Search, X, Download, Copy, CheckCheck, Loader2, Sun, Moon } from "lucide-react";
+import { Bell, FileBarChart, Presentation, Brain, Search, X, Download, Copy, CheckCheck, Loader2, Sparkles } from "lucide-react";
 import companyLogo from "@/assets/logo.png";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
@@ -9,56 +9,6 @@ export function TopNav() {
   const [modal, setModal] = useState<{ title: string; content: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [isDark, setIsDark] = useState(true);
-  const [theme, setTheme] = useState("default");
-
-  // Set dark mode on first load
- useEffect(() => {
-  const html = document.documentElement;
-
-  html.classList.add("dark");
-
-  const savedTheme = localStorage.getItem("dashboard-theme");
-
-  if (savedTheme) {
-    html.classList.add(savedTheme);
-    setTheme(savedTheme);
-  }
-}, []);
-
-  function toggleTheme() {
-    const html = document.documentElement;
-    if (isDark) {
-      html.classList.remove("dark");
-    } else {
-      html.classList.add("dark");
-    }
-    setIsDark(!isDark);
-  }
-  function changeTheme(newTheme: string) {
-  const html = document.documentElement;
-
-  html.classList.remove(
-    "theme-executive",
-    "theme-cyber",
-    "theme-emerald",
-    "theme-lightai"
-  );
-
- if (newTheme === "theme-lightai") {
-  html.classList.remove("dark");
-} else {
-  html.classList.add("dark");
-}
-
-if (newTheme !== "default") {
-  html.classList.add(newTheme);
-}
-
-  localStorage.setItem("dashboard-theme", newTheme);
-
-  setTheme(newTheme);
-}
 
   async function handleWeeklyReport() {
     setLoading("weekly");
@@ -119,8 +69,8 @@ if (newTheme !== "default") {
   />
 </div>
               <div className="leading-tight">
-                <div className="text-sm font-semibold tracking-tight">AI Delivery Copilot</div>
-                <div className="text-[11px] text-muted-foreground">Enterprise Change Intelligence</div>
+                <div className="text-sm font-semibold tracking-tight">Synapse</div>
+                <div className="text-[11px] text-muted-foreground">Your business, always in sync</div>
               </div>
             </div>
             <span className="ml-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-success/15 text-success border border-success/30">
@@ -136,7 +86,7 @@ if (newTheme !== "default") {
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
-                placeholder="Search events, services, documents…"
+                placeholder="Search updates, reports, systems…"
                 className="w-full h-9 rounded-lg bg-input/50 border border-border pl-9 pr-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
               />
             </div>
@@ -145,60 +95,38 @@ if (newTheme !== "default") {
           {/* Action buttons */}
           <div className="flex items-center gap-2">
 
-            {/* Weekly Report */}
+            {/* Weekly Summary */}
             <motion.button
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleWeeklyReport}
               disabled={loading !== null}
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition bg-card/50 border-border text-foreground hover:bg-secondary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition bg-card/60 border-border text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading === "weekly" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileBarChart className="h-3.5 w-3.5" />}
-              {loading === "weekly" ? "Generating..." : "Weekly Report"}
+              {loading === "weekly" ? "Creating…" : "This Week's Summary"}
             </motion.button>
 
-            {/* Governance Deck */}
+            {/* Compliance Report */}
             <motion.button
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
               onClick={handleGovernanceDeck}
               disabled={loading !== null}
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition bg-card/50 border-border text-foreground hover:bg-secondary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition bg-card/60 border-border text-foreground hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading === "gov" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Presentation className="h-3.5 w-3.5" />}
-              {loading === "gov" ? "Generating..." : "Governance Deck"}
+              {loading === "gov" ? "Creating…" : "Compliance Report"}
             </motion.button>
 
-            {/* AI Insights */}
+            {/* Smart Insights */}
             <motion.button
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.97 }}
-              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-medium border transition gradient-primary-bg border-transparent text-primary-foreground ai-glow"
+              className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3 rounded-xl text-xs font-medium gradient-primary-bg border-transparent text-primary-foreground ai-glow"
             >
-              <Brain className="h-3.5 w-3.5" />
-              AI Insights
-            </motion.button>
-            <select
-  value={theme}
-  onChange={(e) => changeTheme(e.target.value)}
-  className="h-9 rounded-lg border border-border bg-card/50 px-3 text-xs outline-none"
->
-  <option value="default">Default AI</option>
-  <option value="theme-executive">Executive Blue</option>
-  <option value="theme-cyber">Cyberpunk Neon</option>
-  <option value="theme-emerald">Emerald AI</option>
-  <option value="theme-lightai">Light AI</option>
-</select>
-
-            {/* Theme toggle */}
-            <motion.button
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={toggleTheme}
-              className="relative h-9 w-9 rounded-lg border border-border bg-card/50 hover:bg-secondary/50 transition flex items-center justify-center"
-              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            >
-              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              <Sparkles className="h-3.5 w-3.5" />
+              Smart Insights
             </motion.button>
 
             {/* Bell */}

@@ -1,228 +1,107 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  AlertCircle,
-  Info,
-  RefreshCw,
-} from "lucide-react";
-
+import { useState, useEffect } from "react";
+import { RefreshCw, AlertTriangle, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { mockEvents } from "../../data/mockEvents";
 
-const SourceBadge = ({ name }: { name: string }) => {
-  const map: Record<string, { bg: string; label: string }> = {
-    Jira: {
-      bg: "bg-info/15 text-info border-info/30",
-      label: "JIRA",
-    },
-    Zoho: {
-      bg: "bg-warning/15 text-warning border-warning/30",
-      label: "ZOHO",
-    },
-    MuleSoft: {
-      bg: "bg-critical/15 text-critical border-critical/30",
-      label: "MULE",
-    },
-    Azure: {
-      bg: "bg-primary/15 text-primary border-primary/30",
-      label: "AZURE",
-    },
-    Salesforce: {
-      bg: "bg-accent/15 text-accent border-accent/30",
-      label: "SFDC",
-    },
-  };
-
-  const m = map[name] ?? map.Jira;
-
-  return (
-    <span
-      className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${m.bg}`}
-    >
-      {m.label}
-    </span>
-  );
+const sevConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
+  critical: { icon: AlertTriangle, color: "#e05c5c", bg: "#ffeaea", label: "Critical" },
+  warning:  { icon: AlertCircle,   color: "#f0a500", bg: "#fff7e6", label: "Warning"  },
+  success:  { icon: CheckCircle2,  color: "#52b788", bg: "#edfaf3", label: "Resolved" },
+  info:     { icon: Info,          color: "#4da8da", bg: "#e8f6fd", label: "Info"     },
 };
 
-const sevStyles: Record<string, any> = {
-  critical: {
-    dot: "text-critical",
-    icon: AlertTriangle,
-    accent: "border-l-critical",
-    chip: "bg-critical/15 text-critical border-critical/30",
-  },
-
-  warning: {
-    dot: "text-warning",
-    icon: AlertCircle,
-    accent: "border-l-warning",
-    chip: "bg-warning/15 text-warning border-warning/30",
-  },
-
-  success: {
-    dot: "text-success",
-    icon: CheckCircle2,
-    accent: "border-l-success",
-    chip: "bg-success/15 text-success border-success/30",
-  },
-
-  info: {
-    dot: "text-info",
-    icon: Info,
-    accent: "border-l-info",
-    chip: "bg-info/15 text-info border-info/30",
-  },
+const sourceCols: Record<string, string> = {
+  Jira: "#4da8da", Azure: "#52b788", MuleSoft: "#e05c5c", Zoho: "#f0a500", Salesforce: "#9b8ff5",
 };
 
 export function EventStream({
   onSelect,
+  liveEvents = [],
 }: {
-  onSelect: (i: number) => void;
+  onSelect: (event: any) => void;
+  liveEvents?: any[];
 }) {
-  const [events, setEvents] = useState(mockEvents);
-
-  const [selected, setSelected] = useState(0);
+  const [events, setEvents]     = useState<any[]>(mockEvents);
+  const [selected, setSelected] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = setInterval(() => {
-      setEvents((prev) => {
-        const pool = [
-          {
-            sev: "info",
-            source: "Jira",
-            id: `JIRA-${Math.floor(Math.random() * 9000) + 1000}`,
-            svc: "Order API",
-            summary: "Story moved to In Review",
-            conf: 90,
-            ts: "now",
-            docs: ["BRD"],
-          },
-
-          {
-            sev: "warning",
-            source: "Azure",
-            id: `ADO-${Math.floor(Math.random() * 900) + 100}`,
-            svc: "Pricing Engine",
-            summary: "Pipeline quality gate flagged 2 issues",
-            conf: 87,
-            ts: "now",
-            docs: ["TDD"],
-          },
-        ];
-
-        const next =
-          pool[Math.floor(Math.random() * pool.length)];
-
-        return [next, ...prev].slice(0, 6);
-      });
-    }, 6000);
-
-    return () => clearInterval(t);
-  }, []);
+    if (!liveEvents.length) return;
+    const latest = liveEvents[0];
+    if (!latest?.id) return;
+    setEvents(prev => {
+      if (prev.find(e => e.id === latest.id)) return prev;
+      return [latest, ...prev].slice(0, 12);
+    });
+  }, [liveEvents.length]);
 
   return (
-    <div className="glass rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
+    <div
+      className="rounded-2xl overflow-hidden"
+      style={{
+        background: "var(--card)",
+        border: "1px solid rgba(124,110,245,0.11)",
+        boxShadow: "0 1px 4px rgba(124,110,245,0.06)",
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(124,110,245,0.08)" }}>
         <div>
-          <h2 className="text-sm font-semibold tracking-tight flex items-center gap-2">
-            Recent Detected Changes
-
-            <span className="relative inline-block h-2 w-2 rounded-full bg-success">
-              <span className="absolute inset-0 rounded-full bg-success animate-ping" />
-            </span>
+          <h2 className="text-sm font-semibold" style={{ color: "var(--foreground)" }}>
+            What's Happening Right Now
+            <span className="inline-block ml-2 h-2 w-2 rounded-full bg-success align-middle animate-pulse" />
           </h2>
-
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Real-time enterprise event stream
+          <p className="text-xs mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+            Live updates from all your connected systems
           </p>
         </div>
-
-        <button className="inline-flex items-center gap-1.5 text-xs px-2.5 h-8 rounded-lg bg-secondary/50 border border-border hover:bg-secondary transition">
-          <RefreshCw className="h-3 w-3" />
-          Refresh
+        <button
+          onClick={() => setEvents(mockEvents)}
+          className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl transition hover:bg-secondary"
+          style={{ border: "1px solid rgba(124,110,245,0.15)", color: "var(--muted-foreground)" }}
+        >
+          <RefreshCw className="h-3 w-3" /> Refresh
         </button>
       </div>
 
-      <div className="space-y-2">
-        <AnimatePresence initial={false}>
-          {events.map((e, i) => {
-            const s = sevStyles[e.sev] || sevStyles.info;
+      {/* List — plain buttons, CSS hover only */}
+      <div className="divide-y" style={{ borderColor: "rgba(124,110,245,0.06)" }}>
+        {events.map(e => {
+          const cfg    = sevConfig[e.sev] ?? sevConfig.info;
+          const Icon   = cfg.icon;
+          const srcCol = sourceCols[e.source] ?? "#7c6ef5";
+          const isSel  = selected === e.id;
 
-            const Icon = s.icon;
+          return (
+            <button
+              key={e.id}
+              onClick={() => { setSelected(e.id); onSelect(e); }}
+              className="w-full text-left px-5 py-3.5 flex items-center gap-4 transition-colors"
+              style={{ background: isSel ? "var(--secondary)" : "transparent" }}
+            >
+              <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
+                <Icon className="h-3.5 w-3.5" style={{ color: cfg.color }} />
+              </div>
 
-            const isSel = selected === i;
-
-            return (
-              <motion.button
-                key={`${e.id}-${i}`}
-                layout
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 16 }}
-                onClick={() => {
-                  setSelected(i);
-                  onSelect(i);
-                }}
-                className={`w-full text-left rounded-xl border border-border p-3 pl-4 border-l-4 ${s.accent} bg-card/40 hover:bg-card transition group ${
-                  isSel ? "glow-border" : ""
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <Icon className={`h-4 w-4 mt-0.5 ${s.dot}`} />
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <SourceBadge name={e.source} />
-
-                      <span className="text-xs font-mono text-muted-foreground">
-                        {e.id}
-                      </span>
-
-                      <span className="text-xs font-medium">
-                        {e.svc}
-                      </span>
-
-                      <span
-                        className={`ml-auto px-1.5 py-0.5 rounded text-[10px] border ${s.chip}`}
-                      >
-                        {(e.sev || "info").toUpperCase()}
-                      </span>
-                    </div>
-
-                    <p className="text-sm mt-1.5 text-foreground/90">
-                      {e.summary}
-                    </p>
-
-                    <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
-                      <span>⏱ {e.ts} ago</span>
-
-                      <span className="inline-flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full gradient-ai-bg" />
-
-                        AI confidence{" "}
-                        <b className="text-foreground/80">
-                          {e.conf}%
-                        </b>
-                      </span>
-
-                      <div className="flex gap-1 flex-wrap">
-                        {e.docs?.map((d: string) => (
-                          <span
-                            key={d}
-                            className="px-1.5 py-0.5 rounded bg-secondary/60 border border-border text-[10px]"
-                          >
-                            {d}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${srcCol}18`, color: srcCol }}>
+                    {e.source.toUpperCase()}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">{e.id}</span>
+                  <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{e.svc}</span>
                 </div>
-              </motion.button>
-            );
-          })}
-        </AnimatePresence>
+                <p className="text-xs truncate" style={{ color: "var(--foreground)" }}>{e.summary}</p>
+              </div>
+
+              <div className="shrink-0 text-right w-16">
+                <p className="text-xs font-bold" style={{ color: cfg.color }}>{e.conf}%</p>
+                <div className="h-1 rounded-full mt-1 w-full" style={{ background: "var(--muted)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${e.conf}%`, background: cfg.color, opacity: 0.7 }} />
+                </div>
+                <p className="text-[10px] mt-1" style={{ color: "var(--muted-foreground)" }}>{e.ts}</p>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

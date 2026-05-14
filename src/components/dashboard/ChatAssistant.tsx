@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, X, Send, Bot, User } from "lucide-react";
 
 const examples = [
@@ -15,7 +15,7 @@ export function ChatAssistant() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [msgs, setMsgs] = useState<Msg[]>([
-    { role: "ai", text: "Hi Aman 👋 I'm your Delivery Copilot. Ask me anything about changes, risks, or governance." },
+    { role: "ai", text: "Hi Ina 👋 I'm your Delivery Copilot. Ask me anything about changes, risks, or governance." },
   ]);
   const [typing, setTyping] = useState(false);
 
@@ -36,14 +36,12 @@ export function ChatAssistant() {
 
   return (
     <>
-      <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+      <button
         onClick={() => setOpen((o) => !o)}
-        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-2xl gradient-primary-bg ai-glow flex items-center justify-center text-primary-foreground"
+        className="fixed bottom-6 right-6 z-40 h-14 w-14 rounded-2xl gradient-primary-bg ai-glow flex items-center justify-center text-primary-foreground transition-transform duration-150 hover:scale-105 active:scale-95"
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
-      </motion.button>
+      </button>
 
       <AnimatePresence>
         {open && (
@@ -95,9 +93,16 @@ export function ChatAssistant() {
                   <div className="h-7 w-7 rounded-lg gradient-ai-bg flex items-center justify-center">
                     <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
                   </div>
-                  <div className="bg-secondary/60 border border-border rounded-2xl px-3 py-2 flex gap-1">
+                  <div className="bg-secondary/60 border border-border rounded-2xl px-3 py-2 flex gap-1 items-center">
                     {[0,1,2].map(i => (
-                      <span key={i} className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" style={{ animationDelay: `${i*0.15}s` }} />
+                      <span
+                        key={i}
+                        className="h-1.5 w-1.5 rounded-full bg-muted-foreground"
+                        style={{
+                          animation: "typing-dot 1.2s ease-in-out infinite",
+                          animationDelay: `${i * 0.2}s`,
+                        }}
+                      />
                     ))}
                   </div>
                 </div>
