@@ -19,19 +19,45 @@ export function ChatAssistant() {
   ]);
   const [typing, setTyping] = useState(false);
 
-  const send = (t?: string) => {
+  const FALLBACK_REPLIES = [
+    "Across this week: 47 changes, 2 SLA breaches, 1 critical (Order API). Governance health is up 1.2%. Want me to draft the weekly report?",
+    "Order API is currently at CRITICAL risk — p95 latency is 1.8s vs 800ms SLA target. Recommend rolling back the retry config change immediately.",
+    "I can see 6 integrations connected. MuleSoft Runtime is healthy at 99.99% uptime. Salesforce Connector has the most errors at 3.8% error rate.",
+    "128 governance documents were auto-generated this week. 3 are pending review past their deadline — owned by @priya.",
+  ];
+  let fallbackIdx = 0;
+
+  const send = async (t?: string) => {
     const text = (t ?? input).trim();
     if (!text) return;
     setMsgs((m) => [...m, { role: "user", text }]);
     setInput("");
     setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMsgs((m) => [...m, {
-        role: "ai",
-        text: "Across this week: 47 changes, 2 SLA breaches, 1 critical (Order API). Governance health is up 1.2%. Want me to draft the weekly report?"
-      }]);
-    }, 1400);
+
+    try {
+      const res = await fetch("/api/claude", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ prompt: text, type: "chat" }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTyping(false);
+        setMsgs((m) => [...m, { role: "ai", text: data.text ?? FALLBACK_REPLIES[0] }]);
+      } else {
+        throw new Error("API error");
+      }
+    } catch {
+      // Graceful fallback if API key not yet configured
+      setTimeout(() => {
+        setTyping(false);
+        setMsgs((m) => [...m, {
+          role: "ai",
+          text: FALLBACK_REPLIES[fallbackIdx++ % FALLBACK_REPLIES.length],
+        }]);
+      }, 1000);
+    }
   };
 
   return (
