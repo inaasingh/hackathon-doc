@@ -10,7 +10,8 @@ import { Schedules } from "@/components/dashboard/Schedules";
 import { Recommendations } from "@/components/dashboard/Recommendations";
 import { ChatAssistant } from "@/components/dashboard/ChatAssistant";
 import { QuickReports } from "@/components/dashboard/QuickReports";
-import { ZohoDeskReport } from "@/components/dashboard/ZohoDeskReport";
+import { IntegrationHub } from "@/components/dashboard/IntegrationHub";
+import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
 import { mockEvents } from "@/data/mockEvents";
 import {
   Bell, Search, AlertCircle, CheckCircle2, Clock,
@@ -46,12 +47,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const [selectedEvent, setSelectedEvent] = useState<any>(DEFAULT_EVENT);
-  const [liveEvents,    setLiveEvents]    = useState<any[]>([]);
-  const [dark, setDark] = useState(() =>
+  const [selectedEvent,      setSelectedEvent]      = useState<any>(DEFAULT_EVENT);
+  const [liveEvents,         setLiveEvents]         = useState<any[]>([]);
+  const [dark,               setDark]               = useState(() =>
     typeof window !== "undefined" && document.documentElement.classList.contains("dark")
-  )
-  const [showRightPanel, setShowRightPanel] = useState(true);
+  );
+  const [showRightPanel,     setShowRightPanel]     = useState(true);
+  const [activeIntegration,  setActiveIntegration]  = useState<IntegrationId | undefined>(undefined);
 
   useEffect(() => {
     if (dark) {
@@ -77,7 +79,7 @@ function Dashboard() {
     >
 
       {/* ── LEFT SIDEBAR ── */}
-      <Sidebar />
+      <Sidebar onIntegrationSelect={setActiveIntegration} />
 
       {/* ── MAIN CONTENT ── */}
       <div className="flex-1 overflow-y-auto min-w-0">
@@ -205,9 +207,9 @@ function Dashboard() {
             <Schedules />
           </div>
 
-          {/* ── ZOHO DESK REPORT ── */}
-          <div id="zoho-desk">
-            <ZohoDeskReport />
+          {/* ── INTEGRATION HUB ── */}
+          <div id="integration-hub">
+            <IntegrationHub activeIntegration={activeIntegration} />
           </div>
 
           {/* ── SIMULATE UPDATES ── */}
