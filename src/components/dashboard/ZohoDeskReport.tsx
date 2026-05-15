@@ -2,8 +2,9 @@ import { useState } from "react";
 import {
   Ticket, AlertTriangle, CheckCircle2, Clock, Pause,
   RefreshCw, ExternalLink, ChevronDown, ChevronUp,
-  AlertCircle, Users, BarChart3, Zap,
+  AlertCircle, Users, BarChart3, Zap, FileDown, Loader2,
 } from "lucide-react";
+import { generateZohoReport } from "@/lib/zohoReportPdf";
 
 // ── Static mock data (no fetch on load) ──────────────────────────
 const MOCK_TICKETS = [
@@ -66,10 +67,23 @@ function SummaryCard({ label, value, icon: Icon, col, bg }: {
 
 // ── Main component ────────────────────────────────────────────────
 export function ZohoDeskReport() {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded,   setExpanded]   = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const visible = expanded ? MOCK_TICKETS : MOCK_TICKETS.slice(0, 5);
+
+  function handleGenerateReport() {
+    setGenerating(true);
+    // Small delay so the spinner shows before the PDF blocks the thread
+    setTimeout(() => {
+      try {
+        generateZohoReport(MOCK_TICKETS);
+      } finally {
+        setGenerating(false);
+      }
+    }, 300);
+  }
 
   function handleRefresh() {
     setRefreshing(true);
@@ -114,6 +128,20 @@ export function ZohoDeskReport() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Generate PDF Report */}
+          <button
+            onClick={handleGenerateReport}
+            disabled={generating}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg,#7c6ef5,#a78ef8)" }}
+            title="Generate AI report PDF from ticket data"
+          >
+            {generating
+              ? <><Loader2 className="h-3 w-3 animate-spin" /> Generating…</>
+              : <><FileDown className="h-3 w-3" /> Generate Report</>
+            }
+          </button>
+
           <button
             onClick={handleRefresh}
             disabled={refreshing}
