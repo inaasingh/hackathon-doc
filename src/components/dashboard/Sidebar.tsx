@@ -19,7 +19,6 @@ const navItems = [
   { icon: HeartPulse,      label: "System Health",   scrollTo: "integration-health"        },
   { icon: CalendarClock,   label: "Schedules",       scrollTo: "schedules"                 },
   { icon: Lightbulb,       label: "Recommendations", scrollTo: "recommendations"           },
-  { icon: Plug,            label: "Integrations",    scrollTo: "integration-hub"           },
   { icon: Bot,             label: "AI Copilot",      scrollTo: null,            badge: "AI"},
   { icon: ShieldCheck,     label: "Compliance",      scrollTo: null                        },
   { icon: Settings,        label: "Settings",        scrollTo: null                        },
@@ -146,8 +145,8 @@ export function Sidebar({ onIntegrationSelect }: Props) {
         })}
 
         {/* ── Integrations section ── */}
-        <div className="pt-4 pb-1">
-          <p className="px-3 text-[10px] font-bold uppercase tracking-widest mb-2"
+        <div className="pt-2 pb-1">
+          <p className="px-3 text-[10px] font-bold uppercase tracking-widest mb-1.5"
             style={{ color: "var(--muted-foreground)", opacity: 0.6 }}>
             Integrations
           </p>
