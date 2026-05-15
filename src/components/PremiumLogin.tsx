@@ -103,6 +103,7 @@ const RightPanel = memo(function RightPanel() {
           <h2 style={{
             fontSize: "38px", fontWeight: 900, color: "#ffffff",
             lineHeight: 1.12, letterSpacing: "-1px", margin: 0,
+            textAlign: "center",
           }}>
             Your code ships.<br/>
             <span style={{
@@ -113,8 +114,9 @@ const RightPanel = memo(function RightPanel() {
             </span>
           </h2>
           <p style={{
-            marginTop: "16px", fontSize: "15px",
+            fontSize: "15px", textAlign: "center",
             color: "rgba(255,255,255,0.55)", lineHeight: 1.65, maxWidth: "320px",
+            margin: "16px auto 0",
           }}>
             AbsoluteLabs detects every change across your stack and instantly generates governance docs, runbooks, and impact reports — so your team never slows down.
           </p>
