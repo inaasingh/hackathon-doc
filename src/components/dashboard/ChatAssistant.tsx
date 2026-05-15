@@ -24,8 +24,17 @@ export function ChatAssistant() {
     "Order API is currently at CRITICAL risk — p95 latency is 1.8s vs 800ms SLA target. Recommend rolling back the retry config change immediately.",
     "I can see 6 integrations connected. MuleSoft Runtime is healthy at 99.99% uptime. Salesforce Connector has the most errors at 3.8% error rate.",
     "128 governance documents were auto-generated this week. 3 are pending review past their deadline — owned by @priya.",
+    "Release-147 deployed successfully 3 hours ago. No rollbacks. All downstream APIs confirmed healthy post-deployment.",
   ];
-  let fallbackIdx = 0;
+  const fallbackIdxRef = { current: 0 };
+
+  const fallback = () => {
+    setTyping(false);
+    setMsgs((m) => [...m, {
+      role: "ai",
+      text: FALLBACK_REPLIES[fallbackIdxRef.current++ % FALLBACK_REPLIES.length],
+    }]);
+  };
 
   const send = async (t?: string) => {
     const text = (t ?? input).trim();
@@ -34,29 +43,29 @@ export function ChatAssistant() {
     setInput("");
     setTyping(true);
 
+    // 8-second hard timeout — prevents freeze if API is slow or unavailable
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+
     try {
       const res = await fetch("/api/claude", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ prompt: text, type: "chat" }),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
 
       if (res.ok) {
         const data = await res.json();
         setTyping(false);
-        setMsgs((m) => [...m, { role: "ai", text: data.text ?? FALLBACK_REPLIES[0] }]);
+        setMsgs((m) => [...m, { role: "ai", text: data.text?.trim() || FALLBACK_REPLIES[0] }]);
       } else {
-        throw new Error("API error");
+        fallback();
       }
     } catch {
-      // Graceful fallback if API key not yet configured
-      setTimeout(() => {
-        setTyping(false);
-        setMsgs((m) => [...m, {
-          role: "ai",
-          text: FALLBACK_REPLIES[fallbackIdx++ % FALLBACK_REPLIES.length],
-        }]);
-      }, 1000);
+      clearTimeout(timer);
+      fallback();
     }
   };
 
