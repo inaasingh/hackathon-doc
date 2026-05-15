@@ -17,18 +17,24 @@ interface Ticket {
   age: string;
 }
 
-// ── Colours (matching dashboard palette) ──────────────────────────────────────
+// ── Colours — matching ABL company template ───────────────────────────────────
+// Source: Mulberry-Governance-Report-(February 2026).pptx theme colours
 const C = {
-  purple:     [124, 110, 245] as [number,number,number],
-  purpleLight:[237, 232, 255] as [number,number,number],
-  teal:       [82,  183, 136] as [number,number,number],
-  amber:      [240, 165,   0] as [number,number,number],
-  red:        [224,  92,  92] as [number,number,number],
-  dark:       [ 28,  24,  40] as [number,number,number],
-  muted:      [138, 131, 153] as [number,number,number],
+  dark:       [ 25,  23,  35] as [number,number,number],  // #191723 — ABL dark bg
+  navy:       [  0,  32,  96] as [number,number,number],  // #002060 — ABL navy accent
+  light:      [243, 242, 255] as [number,number,number],  // #F3F2FF — ABL light bg
+  lightAlt:   [234, 233, 251] as [number,number,number],  // #EAE9FB — table alt row
+  lavender:   [198, 193, 247] as [number,number,number],  // #C6C1F7 — periwinkle
+  teal:       [ 82, 183, 136] as [number,number,number],  // #52B788 — healthy/resolved
+  amber:      [240, 165,   0] as [number,number,number],  // #F0A500 — warning
+  red:        [224,  92,  92] as [number,number,number],  // #E05C5C — critical
+  muted:      [143, 137, 153] as [number,number,number],  // #8F8F9A
   white:      [255, 255, 255] as [number,number,number],
   offwhite:   [248, 246, 255] as [number,number,number],
-  border:     [220, 215, 245] as [number,number,number],
+  border:     [208, 204, 235] as [number,number,number],
+  // Keep purple for badge/pill elements
+  purple:     [124, 110, 245] as [number,number,number],
+  purpleLight:[237, 232, 255] as [number,number,number],
 };
 
 // ── Priority / Status colour helpers ─────────────────────────────────────────
@@ -65,12 +71,12 @@ export function generateZohoReport(tickets: Ticket[]): void {
   // PAGE 1
   // ══════════════════════════════════════════════════════════════════════════
 
-  // ── Header banner ────────────────────────────────────────────────────────
+  // ── Header banner (ABL dark theme — matches PPTX cover) ─────────────────
   doc.setFillColor(...C.dark);
   doc.rect(0, 0, PW, 42, "F");
 
-  // Purple accent stripe
-  doc.setFillColor(...C.purple);
+  // ABL navy accent stripe (matches PPTX section marker colour)
+  doc.setFillColor(...C.navy);
   doc.rect(0, 0, 5, 42, "F");
 
   // Company name
@@ -82,8 +88,8 @@ export function generateZohoReport(tickets: Ticket[]): void {
   // Sub-label
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
-  doc.setTextColor(...C.muted);
-  doc.text("AI DELIVERY COPILOT  ·  SYNAPSE PLATFORM", 14, 22);
+  doc.setTextColor(...C.lavender);
+  doc.text("ABSOLUTE RETAIL CONSULTING LTD  ·  SYNAPSE PLATFORM", 14, 22);
 
   // Report title
   doc.setFont("helvetica", "bold");
@@ -109,15 +115,18 @@ export function generateZohoReport(tickets: Ticket[]): void {
   let y = 52;
 
   // ── Section: Executive Summary ────────────────────────────────────────────
+  // Small navy square marker (matches PPTX slide layout)
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("EXECUTIVE SUMMARY", 14, y);
+  doc.setTextColor(...C.navy);
+  doc.text("EXECUTIVE SUMMARY", 20, y);
 
-  // Underline
-  doc.setDrawColor(...C.purple);
-  doc.setLineWidth(0.4);
-  doc.line(14, y + 2, 80, y + 2);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 100, y + 2);
   y += 8;
 
   const summaryText =
@@ -147,12 +156,15 @@ export function generateZohoReport(tickets: Ticket[]): void {
   y += 16;
 
   // ── Section: Key Metrics ──────────────────────────────────────────────────
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("KEY METRICS", 14, y);
-  doc.setDrawColor(...C.purple);
-  doc.line(14, y + 2, 60, y + 2);
+  doc.setTextColor(...C.navy);
+  doc.text("KEY METRICS", 20, y);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 70, y + 2);
   y += 8;
 
   // 5 stat boxes in a row
@@ -194,12 +206,15 @@ export function generateZohoReport(tickets: Ticket[]): void {
   const priorities = ["Urgent","High","Medium","Low"];
   const pCounts = priorities.map(p => tickets.filter(t => t.priority === p).length);
 
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("PRIORITY BREAKDOWN", 14, y);
-  doc.setDrawColor(...C.purple);
-  doc.line(14, y + 2, 80, y + 2);
+  doc.setTextColor(...C.navy);
+  doc.text("PRIORITY BREAKDOWN", 20, y);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 88, y + 2);
   y += 8;
 
   priorities.forEach((p, i) => {
@@ -243,12 +258,15 @@ export function generateZohoReport(tickets: Ticket[]): void {
   y += 4;
 
   // ── Section: Ticket Table ─────────────────────────────────────────────────
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("RECENT TICKETS", 14, y);
-  doc.setDrawColor(...C.purple);
-  doc.line(14, y + 2, 72, y + 2);
+  doc.setTextColor(...C.navy);
+  doc.text("RECENT TICKETS", 20, y);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 80, y + 2);
   y += 6;
 
   autoTable(doc, {
@@ -257,7 +275,7 @@ export function generateZohoReport(tickets: Ticket[]): void {
     head: [["Ticket ID", "Subject", "Status", "Priority", "Department", "Assignee", "Age"]],
     body: tickets.map(t => [t.id, t.subject, t.status, t.priority, t.dept, t.assignee, t.age]),
     headStyles: {
-      fillColor: C.dark,
+      fillColor: C.navy,
       textColor: C.white,
       fontStyle: "bold",
       fontSize: 7.5,
@@ -277,7 +295,7 @@ export function generateZohoReport(tickets: Ticket[]): void {
       5: { cellWidth: 22 },
       6: { cellWidth: 14, halign: "center" },
     },
-    alternateRowStyles: { fillColor: C.offwhite },
+    alternateRowStyles: { fillColor: C.lightAlt },
     didParseCell: (data) => {
       // Colour-code Status column
       if (data.column.index === 2 && data.section === "body") {
@@ -301,10 +319,10 @@ export function generateZohoReport(tickets: Ticket[]): void {
   // ── Page 2: AI Summary & Recommendations ─────────────────────────────────
   doc.addPage();
 
-  // Page 2 header strip
+  // Page 2 header strip (ABL dark + navy stripe)
   doc.setFillColor(...C.dark);
   doc.rect(0, 0, PW, 20, "F");
-  doc.setFillColor(...C.purple);
+  doc.setFillColor(...C.navy);
   doc.rect(0, 0, 5, 20, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
@@ -314,21 +332,27 @@ export function generateZohoReport(tickets: Ticket[]): void {
   y = 30;
 
   // AI Generated Summary
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("AI-GENERATED ANALYSIS", 14, y);
-  doc.setDrawColor(...C.purple);
-  doc.line(14, y + 2, 90, y + 2);
+  doc.setTextColor(...C.navy);
+  doc.text("AI-GENERATED ANALYSIS", 20, y);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 95, y + 2);
   y += 8;
 
-  // AI badge
-  doc.setFillColor(...C.purpleLight);
-  doc.roundedRect(14, y, 28, 6, 1.5, 1.5, "F");
+  // AI badge (using ABL light lavender)
+  doc.setFillColor(...C.lightAlt);
+  doc.roundedRect(20, y, 32, 6, 1.5, 1.5, "F");
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.2);
+  doc.roundedRect(20, y, 32, 6, 1.5, 1.5, "S");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7);
-  doc.setTextColor(...C.purple);
-  doc.text("✦  CLAUDE AI  ·  POWERED", 28, y + 4, { align: "center" });
+  doc.setTextColor(...C.navy);
+  doc.text("✦  CLAUDE AI  ·  POWERED", 36, y + 4, { align: "center" });
   y += 10;
 
   const aiSections = [
@@ -368,29 +392,32 @@ export function generateZohoReport(tickets: Ticket[]): void {
   ];
 
   aiSections.forEach(section => {
-    // Section title
+    // Section title (ABL navy)
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
-    doc.setTextColor(...C.purple);
-    doc.text(section.title.toUpperCase(), 14, y);
+    doc.setTextColor(...C.navy);
+    doc.text(section.title.toUpperCase(), 20, y);
     y += 5;
 
     // Section body
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
     doc.setTextColor(...C.dark);
-    const lines = doc.splitTextToSize(section.body, PW - 28);
-    doc.text(lines, 14, y);
+    const lines = doc.splitTextToSize(section.body, PW - 34);
+    doc.text(lines, 20, y);
     y += lines.length * 4.8 + 6;
   });
 
   // ── Dept summary table ─────────────────────────────────────────────────────
+  doc.setFillColor(...C.navy);
+  doc.rect(14, y - 5, 3, 10, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(...C.dark);
-  doc.text("TICKETS BY DEPARTMENT", 14, y);
-  doc.setDrawColor(...C.purple);
-  doc.line(14, y + 2, 90, y + 2);
+  doc.setTextColor(...C.navy);
+  doc.text("TICKETS BY DEPARTMENT", 20, y);
+  doc.setDrawColor(...C.navy);
+  doc.setLineWidth(0.3);
+  doc.line(20, y + 2, 96, y + 2);
   y += 6;
 
   const depts = [...new Set(tickets.map(t => t.dept))];
@@ -406,7 +433,7 @@ export function generateZohoReport(tickets: Ticket[]): void {
     head: [["Department", "Total", "Urgent/High", "Resolved"]],
     body: deptRows,
     headStyles: {
-      fillColor: C.purple,
+      fillColor: C.navy,
       textColor: C.white,
       fontStyle: "bold",
       fontSize: 8,
@@ -419,7 +446,7 @@ export function generateZohoReport(tickets: Ticket[]): void {
       2: { cellWidth: 30, halign: "center" },
       3: { cellWidth: 25, halign: "center" },
     },
-    alternateRowStyles: { fillColor: C.offwhite },
+    alternateRowStyles: { fillColor: C.lightAlt },
     tableLineColor: C.border,
     tableLineWidth: 0.2,
   });
@@ -434,7 +461,7 @@ export function generateZohoReport(tickets: Ticket[]): void {
     doc.setFontSize(7);
     doc.setTextColor(...C.muted);
     doc.text(
-      "AbsoluteLabs Synapse · AI Delivery Copilot · This report was auto-generated from mock data for demonstration purposes.",
+      "© 2026 Absolute Retail Consulting LTD. All Rights Reserved.  ·  Auto-generated by Synapse AI Platform.",
       14,
       PH - 5,
     );

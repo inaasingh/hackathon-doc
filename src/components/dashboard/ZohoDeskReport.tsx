@@ -3,8 +3,10 @@ import {
   Ticket, AlertTriangle, CheckCircle2, Clock, Pause,
   RefreshCw, ExternalLink, ChevronDown, ChevronUp,
   AlertCircle, Users, BarChart3, Zap, FileDown, Loader2,
+  FileSpreadsheet, Cloud,
 } from "lucide-react";
 import { generateZohoReport } from "@/lib/zohoReportPdf";
+import { generateHealthCheckXLSX } from "@/lib/xlsxHealthReport";
 
 // ── Static mock data (no fetch on load) ──────────────────────────
 const MOCK_TICKETS = [
@@ -67,21 +69,26 @@ function SummaryCard({ label, value, icon: Icon, col, bg }: {
 
 // ── Main component ────────────────────────────────────────────────
 export function ZohoDeskReport() {
-  const [expanded,   setExpanded]   = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [generating, setGenerating] = useState(false);
+  const [expanded,       setExpanded]       = useState(false);
+  const [refreshing,     setRefreshing]     = useState(false);
+  const [generating,     setGenerating]     = useState(false);
+  const [generatingXlsx, setGeneratingXlsx] = useState(false);
 
   const visible = expanded ? MOCK_TICKETS : MOCK_TICKETS.slice(0, 5);
 
   function handleGenerateReport() {
     setGenerating(true);
-    // Small delay so the spinner shows before the PDF blocks the thread
     setTimeout(() => {
-      try {
-        generateZohoReport(MOCK_TICKETS);
-      } finally {
-        setGenerating(false);
-      }
+      try { generateZohoReport(MOCK_TICKETS); }
+      finally { setGenerating(false); }
+    }, 300);
+  }
+
+  function handleGenerateXlsx() {
+    setGeneratingXlsx(true);
+    setTimeout(() => {
+      try { generateHealthCheckXLSX(); }
+      finally { setGeneratingXlsx(false); }
     }, 300);
   }
 
@@ -115,30 +122,44 @@ export function ZohoDeskReport() {
           </div>
           <div>
             <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: "var(--foreground)" }}>
-              Zoho Desk — Support Report
+              Integration Reports
               <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
                 style={{ background: "#f0a50020", color: "#f0a500" }}>
                 DEMO
               </span>
             </h2>
             <p className="text-[11px] mt-0.5" style={{ color: "var(--muted-foreground)" }}>
-              Last 7 days · 10 tickets across 4 departments
+              Zoho Desk tickets · CloudHub health · MuleSoft APIs
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Generate PDF Report */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Health Check XLSX — CloudHub/MuleSoft format */}
+          <button
+            onClick={handleGenerateXlsx}
+            disabled={generatingXlsx}
+            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg,#002060,#1a4a8a)" }}
+            title="Generate CloudHub Health Check XLSX (6-sheet report)"
+          >
+            {generatingXlsx
+              ? <><Loader2 className="h-3 w-3 animate-spin" /> Generating…</>
+              : <><FileSpreadsheet className="h-3 w-3" /> Health Check XLSX</>
+            }
+          </button>
+
+          {/* Zoho Desk PDF */}
           <button
             onClick={handleGenerateReport}
             disabled={generating}
             className="inline-flex items-center gap-1.5 h-8 px-3 rounded-xl text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
             style={{ background: "linear-gradient(135deg,#7c6ef5,#a78ef8)" }}
-            title="Generate AI report PDF from ticket data"
+            title="Generate Zoho Desk PDF report"
           >
             {generating
               ? <><Loader2 className="h-3 w-3 animate-spin" /> Generating…</>
-              : <><FileDown className="h-3 w-3" /> Generate Report</>
+              : <><FileDown className="h-3 w-3" /> Zoho PDF</>
             }
           </button>
 
