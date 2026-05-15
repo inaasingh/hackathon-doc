@@ -67,7 +67,7 @@ export function Sidebar({ onIntegrationSelect }: Props) {
 
   return (
     <aside
-      className="flex flex-col shrink-0 h-screen overflow-y-auto"
+      className="flex flex-col shrink-0 h-screen"
       style={{
         width: 220,
         background: "var(--sidebar)",
@@ -108,94 +108,92 @@ export function Sidebar({ onIntegrationSelect }: Props) {
         )}
       </div>
 
-      {/* ── Main Navigation ── */}
-      {/* ── Main Navigation ── */}
-      <nav className="px-3 pt-4 pb-2 space-y-0.5">
-        {navItems.map(item => {
-          const isActive = active === item.label;
-          return (
-            <button
-              key={item.label}
-              onClick={() => handleNav(item)}
-              className="relative w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm transition-all"
-              style={{
-                background: isActive ? "var(--secondary)" : "transparent",
-                color: isActive ? "var(--primary)" : "var(--muted-foreground)",
-                fontWeight: isActive ? 600 : 400,
-              }}
-            >
-              <span
-                className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-200"
-                style={{ width: 3, height: 20, background: "var(--primary)", opacity: isActive ? 1 : 0 }}
-              />
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="flex-1 text-left">{item.label}</span>
-              {item.badge != null && (
-                <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
-                  style={{
-                    background: isActive ? "var(--primary)" : "var(--secondary)",
-                    color: isActive ? "var(--primary-foreground)" : "var(--primary)",
-                  }}
-                >
-                  {item.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </nav>
-
-      {/* ── Integrations section ── */}
-      <div className="px-3 pb-2" style={{ borderTop: "1px solid rgba(124,110,245,0.08)" }}>
-        <p className="px-3 pt-3 text-[10px] font-bold uppercase tracking-widest mb-1.5"
-          style={{ color: "var(--muted-foreground)", opacity: 0.6 }}>
-          Integrations
-        </p>
-        {integrations.map(intg => {
-          const isActive = active === intg.label;
-          return (
-            <div key={intg.id} className="relative flex items-center group">
+      {/* ── Scrollable nav + integrations ── */}
+      <div className="flex-1 overflow-y-auto">
+        <nav className="px-3 pt-4 pb-1 space-y-0.5">
+          {navItems.map(item => {
+            const isActive = active === item.label;
+            return (
               <button
-                onClick={() => handleIntegration(intg)}
-                className="relative w-full flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-all"
+                key={item.label}
+                onClick={() => handleNav(item)}
+                className="relative w-full flex items-center gap-3 px-3 h-10 rounded-xl text-sm transition-all"
                 style={{
-                  background: isActive ? `${intg.color}14` : "transparent",
-                  color:      isActive ? intg.color : "var(--muted-foreground)",
+                  background: isActive ? "var(--secondary)" : "transparent",
+                  color: isActive ? "var(--primary)" : "var(--muted-foreground)",
                   fontWeight: isActive ? 600 : 400,
                 }}
-                title={`View ${intg.label} data`}
               >
                 <span
                   className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-200"
-                  style={{ width: 3, height: 18, background: intg.color, opacity: isActive ? 1 : 0 }}
+                  style={{ width: 3, height: 20, background: "var(--primary)", opacity: isActive ? 1 : 0 }}
                 />
-                <span
-                  className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse"
-                  style={{ background: intg.dotColor }}
-                />
-                <intg.icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="flex-1 text-left text-xs truncate">{intg.label}</span>
-                <a
-                  href={intg.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={e => e.stopPropagation()}
-                  className="opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity p-0.5 rounded"
-                  title={`Open ${intg.label}`}
-                >
-                  <ExternalLink className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
-                </a>
+                <item.icon className="h-4 w-4 shrink-0" />
+                <span className="flex-1 text-left">{item.label}</span>
+                {item.badge != null && (
+                  <span
+                    className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{
+                      background: isActive ? "var(--primary)" : "var(--secondary)",
+                      color: isActive ? "var(--primary-foreground)" : "var(--primary)",
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                )}
               </button>
-            </div>
-          );
-        })}
+            );
+          })}
+        </nav>
+
+        {/* ── Integrations section — immediately after nav ── */}
+        <div className="px-3 pb-3" style={{ borderTop: "1px solid rgba(124,110,245,0.08)" }}>
+          <p className="px-3 pt-2 text-[10px] font-bold uppercase tracking-widest mb-1"
+            style={{ color: "var(--muted-foreground)", opacity: 0.6 }}>
+            Integrations
+          </p>
+          {integrations.map(intg => {
+            const isActive = active === intg.label;
+            return (
+              <div key={intg.id} className="relative flex items-center group">
+                <button
+                  onClick={() => handleIntegration(intg)}
+                  className="relative w-full flex items-center gap-2.5 px-3 h-9 rounded-xl text-sm transition-all"
+                  style={{
+                    background: isActive ? `${intg.color}14` : "transparent",
+                    color:      isActive ? intg.color : "var(--muted-foreground)",
+                    fontWeight: isActive ? 600 : 400,
+                  }}
+                  title={`View ${intg.label} data`}
+                >
+                  <span
+                    className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-200"
+                    style={{ width: 3, height: 18, background: intg.color, opacity: isActive ? 1 : 0 }}
+                  />
+                  <span
+                    className="h-1.5 w-1.5 rounded-full shrink-0 animate-pulse"
+                    style={{ background: intg.dotColor }}
+                  />
+                  <intg.icon className="h-3.5 w-3.5 shrink-0" />
+                  <span className="flex-1 text-left text-xs truncate">{intg.label}</span>
+                  <a
+                    href={intg.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={e => e.stopPropagation()}
+                    className="opacity-0 group-hover:opacity-70 hover:!opacity-100 transition-opacity p-0.5 rounded"
+                    title={`Open ${intg.label}`}
+                  >
+                    <ExternalLink className="h-3 w-3" style={{ color: "var(--muted-foreground)" }} />
+                  </a>
+                </button>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Spacer — pushes sign-out to bottom */}
-      <div className="flex-1" />
-
-      {/* ── Sign out ── */}
+      {/* ── Sign out — always pinned to bottom ── */}
       <div className="px-3 py-4 shrink-0" style={{ borderTop: "1px solid rgba(124,110,245,0.08)" }}>
         <button
           onClick={() => auth.logout()}
