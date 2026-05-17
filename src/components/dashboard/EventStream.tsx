@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { RefreshCw, AlertTriangle, CheckCircle2, AlertCircle, Info } from "lucide-react";
+import { RefreshCw, AlertTriangle, CheckCircle2, AlertCircle, Info, GitBranch } from "lucide-react";
 import { mockEvents } from "../../data/mockEvents";
+import { RCAReport } from "./RCAReport";
 
 const sevConfig: Record<string, { icon: any; color: string; bg: string; label: string }> = {
   critical: { icon: AlertTriangle, color: "#e05c5c", bg: "#ffeaea", label: "Critical" },
@@ -20,8 +21,9 @@ export function EventStream({
   onSelect: (event: any) => void;
   liveEvents?: any[];
 }) {
-  const [events, setEvents]     = useState<any[]>(mockEvents);
+  const [events,   setEvents]   = useState<any[]>(mockEvents);
   const [selected, setSelected] = useState<string | null>(null);
+  const [rcaEvent, setRcaEvent] = useState<any | null>(null);
 
   useEffect(() => {
     if (!liveEvents.length) return;
@@ -71,38 +73,64 @@ export function EventStream({
           const isSel  = selected === e.id;
 
           return (
-            <button
+            <div
               key={e.id}
-              onClick={() => { setSelected(e.id); onSelect(e); }}
-              className="w-full text-left px-5 py-3.5 flex items-center gap-4 transition-colors"
+              className="flex items-center gap-4 px-5 py-3.5 transition-colors group"
               style={{ background: isSel ? "var(--secondary)" : "transparent" }}
             >
-              <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
-                <Icon className="h-3.5 w-3.5" style={{ color: cfg.color }} />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${srcCol}18`, color: srcCol }}>
-                    {e.source.toUpperCase()}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground font-mono">{e.id}</span>
-                  <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{e.svc}</span>
+              {/* main clickable row */}
+              <button
+                onClick={() => { setSelected(e.id); onSelect(e); }}
+                className="flex items-center gap-4 flex-1 min-w-0 text-left"
+              >
+                <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: cfg.bg }}>
+                  <Icon className="h-3.5 w-3.5" style={{ color: cfg.color }} />
                 </div>
-                <p className="text-xs truncate" style={{ color: "var(--foreground)" }}>{e.summary}</p>
-              </div>
 
-              <div className="shrink-0 text-right w-16">
-                <p className="text-xs font-bold" style={{ color: cfg.color }}>{e.conf}%</p>
-                <div className="h-1 rounded-full mt-1 w-full" style={{ background: "var(--muted)" }}>
-                  <div className="h-full rounded-full" style={{ width: `${e.conf}%`, background: cfg.color, opacity: 0.7 }} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${srcCol}18`, color: srcCol }}>
+                      {e.source.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground font-mono">{e.id}</span>
+                    <span className="text-xs font-medium" style={{ color: "var(--foreground)" }}>{e.svc}</span>
+                  </div>
+                  <p className="text-xs truncate" style={{ color: "var(--foreground)" }}>{e.summary}</p>
                 </div>
-                <p className="text-[10px] mt-1" style={{ color: "var(--muted-foreground)" }}>{e.ts}</p>
-              </div>
-            </button>
+
+                <div className="shrink-0 text-right w-16">
+                  <p className="text-xs font-bold" style={{ color: cfg.color }}>{e.conf}%</p>
+                  <div className="h-1 rounded-full mt-1 w-full" style={{ background: "var(--muted)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${e.conf}%`, background: cfg.color, opacity: 0.7 }} />
+                  </div>
+                  <p className="text-[10px] mt-1" style={{ color: "var(--muted-foreground)" }}>{e.ts}</p>
+                </div>
+              </button>
+
+              {/* RCA button — always visible */}
+              <button
+                onClick={() => setRcaEvent(e)}
+                title="Run Root Cause Analysis"
+                className="shrink-0 flex items-center gap-1.5 px-2.5 h-7 rounded-lg border border-yellow-400/40
+                  bg-yellow-400/10 hover:bg-yellow-400/20 hover:border-yellow-400/60
+                  transition-all duration-150"
+              >
+                <GitBranch className="h-3 w-3 text-yellow-400" />
+                <span className="text-[10px] font-semibold text-yellow-400">RCA</span>
+              </button>
+            </div>
           );
         })}
       </div>
+
+      {/* RCA Modal */}
+      {rcaEvent && (
+        <RCAReport
+          event={rcaEvent}
+          history={events}
+          onClose={() => setRcaEvent(null)}
+        />
+      )}
     </div>
   );
 }
