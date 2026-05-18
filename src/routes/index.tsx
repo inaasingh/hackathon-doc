@@ -11,14 +11,14 @@ import { Recommendations } from "@/components/dashboard/Recommendations";
 import { ChatAssistant } from "@/components/dashboard/ChatAssistant";
 import { QuickReports } from "@/components/dashboard/QuickReports";
 import { IntegrationHub } from "@/components/dashboard/IntegrationHub";
+import { MinecraftPlayground } from "@/components/dashboard/MinecraftPlayground";
 import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
 import { mockEvents } from "@/data/mockEvents";
 import {
   Bell, Search, AlertCircle, CheckCircle2, Clock,
-  ArrowRight, Sun, Moon,
-
+  ArrowRight, Sun, Moon, Gamepad2,
   PanelRightClose,
-PanelRightOpen,
+  PanelRightOpen,
 } from "lucide-react";
 
 const DEFAULT_EVENT = mockEvents[0];
@@ -54,6 +54,7 @@ function Dashboard() {
   );
   const [showRightPanel,     setShowRightPanel]     = useState(true);
   const [activeIntegration,  setActiveIntegration]  = useState<IntegrationId | undefined>(undefined);
+  const [showPlayground,     setShowPlayground]     = useState(false);
 
   useEffect(() => {
     if (dark) {
@@ -135,6 +136,15 @@ function Dashboard() {
 
   <button className="h-8 w-8 rounded-xl border bg-card flex items-center justify-center hover:bg-secondary transition shadow-sm">
     <Search className="h-3.5 w-3.5 text-muted-foreground" />
+  </button>
+
+  <button
+    onClick={() => setShowPlayground(true)}
+    className="h-8 flex items-center gap-1.5 px-3 rounded-xl border bg-card hover:bg-secondary transition shadow-sm"
+    title="Open Minecraft Playground"
+  >
+    <Gamepad2 className="h-3.5 w-3.5 text-[#52b788]" />
+    <span className="text-xs font-medium text-[#52b788]">Playground</span>
   </button>
 
 </div>
@@ -312,6 +322,9 @@ function Dashboard() {
 
     {/* ── FLOATING CHAT BOT — outside stacking context so z-index works ── */}
     <ChatAssistant />
-    </>
+
+    {/* ── MINECRAFT PLAYGROUND ── */}
+    {showPlayground && <MinecraftPlayground onClose={() => setShowPlayground(false)} />}
+</>
   );
 }
