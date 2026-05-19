@@ -10,6 +10,7 @@ import { Schedules } from "@/components/dashboard/Schedules";
 import { Recommendations } from "@/components/dashboard/Recommendations";
 import { ChatAssistant } from "@/components/dashboard/ChatAssistant";
 import { QuickReports } from "@/components/dashboard/QuickReports";
+import { DependencyGraph } from "@/components/dashboard/DependencyGraph";
 import { IntegrationHub } from "@/components/dashboard/IntegrationHub";
 import { MinecraftPlayground } from "@/components/dashboard/MinecraftPlayground";
 import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
@@ -191,11 +192,12 @@ function Dashboard() {
           {/* ── METRIC CARDS ── */}
           <MetricCards />
 
-          {/* ── 2-COL: EVENT STREAM + QUICK REPORTS | AI WORKSPACE ── */}
-          <div className="grid grid-cols-5 gap-5 items-stretch">
+          {/* ── 2-COL: EVENT STREAM + QUICK REPORTS + DEPENDENCY GRAPH | AI WORKSPACE ── */}
+          <div className="grid grid-cols-5 gap-5 items-start">
             <div className="col-span-3 flex flex-col gap-5" id="event-stream">
               <EventStream onSelect={setSelectedEvent} liveEvents={liveEvents} />
               <QuickReports />
+              <DependencyGraph liveEvents={liveEvents} />
             </div>
             <div className="col-span-2 flex flex-col" id="ai-workspace">
               <AIWorkspace selectedEvent={selectedEvent} />
