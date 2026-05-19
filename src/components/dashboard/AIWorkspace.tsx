@@ -93,6 +93,7 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
         border: "1px solid rgba(124,110,245,0.11)",
         borderRadius: "1rem",
         boxShadow: "0 1px 4px rgba(124,110,245,0.06)",
+        height: "calc(100vh - 120px)",
       }}
     >
       {/* HEADER */}
@@ -169,8 +170,8 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
 
       {/* CONTENT */}
       <div
-        className="rounded-xl border border-border p-5 overflow-y-auto"
-        style={{ background: "var(--muted)", minHeight: "12rem", maxHeight: "32rem" }}
+        className="rounded-xl border border-border p-5 overflow-y-auto flex-1"
+        style={{ background: "var(--muted)", minHeight: 0 }}
       >
         {loading ? (
           <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">

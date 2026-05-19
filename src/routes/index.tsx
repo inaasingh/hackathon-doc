@@ -199,7 +199,7 @@ function Dashboard() {
               <QuickReports />
               <DependencyGraph liveEvents={liveEvents} />
             </div>
-            <div className="col-span-2" id="ai-workspace">
+            <div className="col-span-2 sticky top-[73px]" id="ai-workspace">
               <AIWorkspace selectedEvent={selectedEvent} />
             </div>
           </div>
