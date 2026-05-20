@@ -11,6 +11,7 @@ import {
   MULESOFT_SCHEDULERS, JIRA_TICKETS,
 } from "@/data/mockIntegrationData";
 import { useTicketPipeline } from "@/hooks/useTicketPipeline";
+import { generateHealthCheckXLSX } from "@/lib/xlsxHealthReport";
 
 const BACKEND = "http://localhost:3001";
 
@@ -515,6 +516,16 @@ function MuleSoftTab() {
 
       <TabHeader subtitle={`${apis.length} APIs · CloudHub Production`} url="https://anypoint.mulesoft.com/cloudhub" label="CloudHub"
         isLive={isLive} onReport={() => setShowReport(true)} system="mulesoft" stats={stats} items={apis} />
+
+      {/* Health Check XLSX Download */}
+      <button
+        onClick={() => { try { generateHealthCheckXLSX(); } catch(e) { alert("Failed to generate report"); } }}
+        className="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold text-white transition hover:opacity-90"
+        style={{ background: "linear-gradient(135deg,#002060,#1a4a8a)", border: "1px solid rgba(0,32,96,0.4)" }}
+      >
+        <Download className="h-3.5 w-3.5" />
+        Download Weekly Health Check Report (.xlsx)
+      </button>
 
       {/* Backend health cards if live */}
       {!loading && services.length > 0 && (
