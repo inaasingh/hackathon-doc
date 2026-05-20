@@ -41,6 +41,148 @@ const BLAST_MAP: Record<string, string[]> = {
   Jira:       ["jira", "orderapi", "salesforce", "zoho"],
   Zoho:       ["zoho"],
   Salesforce: ["salesforce", "zoho"],
+  OrderAPI:   ["orderapi", "salesforce", "zoho"],
+};
+
+// Per-source realistic mock predictions
+const BLAST_SCENARIOS: Record<string, {
+  critical?: { prediction: string; confidence: number; detail: string };
+  warning?:  { prediction: string; confidence: number; detail: string };
+  info?:     { prediction: string; confidence: number; detail: string };
+  success?:  { prediction: string; confidence: number; detail: string };
+}> = {
+  Azure: {
+    critical: {
+      prediction: "CI/CD pipeline failure detected. Deployments to MuleSoft and Order API are blocked — 3 release candidates queued. Rollback to build #1142 recommended immediately.",
+      confidence: 96,
+      detail: "Build agent pool exhausted · 2 failed pipelines · last deploy 14m ago",
+    },
+    warning: {
+      prediction: "Deployment pipeline running slower than baseline. MuleSoft API gateway may receive a delayed build artifact — expect 12–18 min propagation lag to Order API and Salesforce.",
+      confidence: 84,
+      detail: "Agent queue depth: 7 · avg build time up 38% · no failures yet",
+    },
+    info: {
+      prediction: "Azure DevOps configuration change pushed. No deployments triggered — downstream systems unaffected. Change log updated in Jira automatically.",
+      confidence: 91,
+      detail: "Policy update · branch permissions changed · no active pipelines affected",
+    },
+    success: {
+      prediction: "Release-147 deployed successfully through the full integration chain. MuleSoft, Order API and Salesforce health checks all passing. Zoho ticket volume stable.",
+      confidence: 99,
+      detail: "Deploy time: 4m 12s · all gates passed · no rollback required",
+    },
+  },
+  MuleSoft: {
+    critical: {
+      prediction: "Circuit breaker tripped on the Order API integration flow. Payment confirmations failing for ~40% of transactions. Salesforce CRM updates halted and Zoho ticket queue growing rapidly.",
+      confidence: 94,
+      detail: "Error rate: 67% · circuit breaker open · last success 8m ago · 214 failed requests",
+    },
+    warning: {
+      prediction: "MuleSoft API gateway latency elevated to 1.8s p95 — SLA threshold is 1.2s. Downstream Order API response times degrading. Salesforce sync delay now at 4–6 minutes.",
+      confidence: 88,
+      detail: "p95 latency: 1.8s · p99: 3.1s · 12 timeout errors in last 5 min",
+    },
+    info: {
+      prediction: "MuleSoft connector version updated. New retry policy active — downstream systems will see improved resilience on transient failures. No performance impact detected.",
+      confidence: 78,
+      detail: "Connector v4.2.1 → v4.3.0 · retry policy: 3x with backoff · tested on staging",
+    },
+    success: {
+      prediction: "MuleSoft runtime restarted cleanly after scheduled maintenance. All 30 API flows active. Order API, Salesforce and Zoho connections re-established with zero message loss.",
+      confidence: 97,
+      detail: "Runtime uptime: 99.98% · all flows green · 0 messages dropped during restart",
+    },
+  },
+  Jira: {
+    critical: {
+      prediction: "Jira webhook delivery failing — Order API is not receiving ticket status updates. Sprint board shows 9 stalled items. Risk of SLA breach on 3 P1 tickets if not resolved in 45 min.",
+      confidence: 89,
+      detail: "Webhook failures: 23 · last delivery: 41m ago · 3 P1 tickets at risk",
+    },
+    warning: {
+      prediction: "Jira ticket sync to Order API running behind schedule. 14 tickets created in the last hour have not triggered downstream workflows. Manual review recommended.",
+      confidence: 81,
+      detail: "Sync lag: 22 min · queue depth: 14 · no data loss, just delayed",
+    },
+    info: {
+      prediction: "Jira sprint planning completed. 18 new tickets assigned to the MuleSoft integration team — expect increased Order API activity over the next 5 business days.",
+      confidence: 74,
+      detail: "New sprint: 18 tickets · 6 high priority · 2 escalated from last sprint",
+    },
+    success: {
+      prediction: "Jira–Order API integration verified. All 47 tickets from the current sprint are correctly synced. Automation rules firing as expected across all downstream workflows.",
+      confidence: 98,
+      detail: "47 tickets synced · 0 failures · automation rules: 12 active",
+    },
+  },
+  Zoho: {
+    critical: {
+      prediction: "Zoho Desk ticket ingestion halted. Customer-facing support queue not updating. 31 new tickets stuck in processing — client SLAs at immediate risk for Clarks and Mulberry accounts.",
+      confidence: 92,
+      detail: "Queue blocked · 31 tickets pending · Clarks SLA breaches in 18 min",
+    },
+    warning: {
+      prediction: "Zoho response times elevated — ticket classification taking 3x longer than normal. AI draft responses delayed. Recommend checking Groq API rate limits and Zoho org health.",
+      confidence: 79,
+      detail: "Response time: 4.2s avg · AI queue: 8 pending · rate limit at 72%",
+    },
+    info: {
+      prediction: "Zoho Desk department configuration updated. Ticket routing rules refreshed for Mulberry and Clarks teams. No impact on existing open tickets.",
+      confidence: 83,
+      detail: "3 departments updated · routing rules: 7 changed · effective immediately",
+    },
+    success: {
+      prediction: "Zoho Desk operating normally. 92 tickets resolved this week, 7 open. AI urgency scoring active — average score 64/100. All client SLAs within threshold.",
+      confidence: 99,
+      detail: "92 resolved · 7 open · avg urgency: 64 · SLA compliance: 97.4%",
+    },
+  },
+  Salesforce: {
+    critical: {
+      prediction: "Salesforce CRM sync failed — Order API updates are not reaching customer records. Revenue reporting data stale by 2+ hours. Billing module may show incorrect figures until resolved.",
+      confidence: 91,
+      detail: "Sync error: AUTH_TOKEN_EXPIRED · 847 records not updated · billing impacted",
+    },
+    warning: {
+      prediction: "Salesforce API rate limit at 78% of daily allocation. Order API sync may be throttled within 3 hours. Consider batching non-urgent CRM updates to avoid hitting the cap.",
+      confidence: 85,
+      detail: "API calls today: 78,240 / 100,000 · peak usage at 14:00 UTC · 3h remaining",
+    },
+    info: {
+      prediction: "Salesforce opportunity records updated from Order API sync. 142 new orders reflected in CRM. Pipeline value updated — no manual reconciliation required.",
+      confidence: 88,
+      detail: "142 records synced · pipeline delta: +£84,200 · sync duration: 1m 12s",
+    },
+    success: {
+      prediction: "Salesforce–Order API integration operating at peak performance. Sub-second sync latency. All customer records up to date. Zoho Desk ticket linkage verified for open accounts.",
+      confidence: 99,
+      detail: "Sync latency: 0.3s avg · 100% record match · 0 conflicts in last 24h",
+    },
+  },
+  OrderAPI: {
+    critical: {
+      prediction: "Order API returning HTTP 500 errors on checkout flow — affecting 35–40% of transactions. Salesforce order records stalling and Zoho support tickets spiking. Likely payment gateway issue.",
+      confidence: 93,
+      detail: "Error rate: 38% · 500 errors on /checkout/confirm · started 7m ago",
+    },
+    warning: {
+      prediction: "Order API p95 latency at 2.1s — above the 1.5s SLA threshold. Downstream Salesforce CRM sync queuing up. Customer-facing checkout experiencing intermittent slowness.",
+      confidence: 86,
+      detail: "p95: 2.1s · p99: 4.4s · Salesforce queue: 23 pending updates",
+    },
+    info: {
+      prediction: "Order API maintenance window completed. New product catalogue endpoints deployed. Salesforce and Zoho connectors operating with updated field mappings.",
+      confidence: 82,
+      detail: "v2.4.1 deployed · 3 new endpoints · field mappings updated in Salesforce",
+    },
+    success: {
+      prediction: "Order API fully operational after incident recovery. All 1,240 failed transactions reprocessed. Salesforce records reconciled and Zoho tickets auto-resolved.",
+      confidence: 99,
+      detail: "1,240 reprocessed · 0 data loss · Salesforce: in sync · Zoho: 8 auto-closed",
+    },
+  },
 };
 
 interface BlastResult {
@@ -50,6 +192,7 @@ interface BlastResult {
   prediction: string;
   severity: string;
   confidence: number;
+  detail?: string;
 }
 
 function getNodeCenter(node: ServiceNode) {
@@ -122,24 +265,50 @@ export function DependencyGraph({ liveEvents = [] }: { liveEvents?: any[] }) {
   }
 
   function mockBlast(source: string, affected: string[], sev: string): BlastResult {
-    const msgs: Record<string, string> = {
+    const scenario = BLAST_SCENARIOS[source]?.[sev as keyof typeof BLAST_SCENARIOS[string]];
+    const fallbackMsgs: Record<string, string> = {
       critical: "Critical incident detected — downstream services may experience cascading failures. Immediate intervention required.",
-      warning:  "Degraded performance propagating through integration layer. Monitor downstream latency closely.",
-      info:     "Configuration change propagated successfully. No adverse impact detected on downstream systems.",
-      success:  "Deployment verified across integration chain. All downstream health checks passing.",
+      warning:  "Degraded performance propagating through the integration layer. Monitor downstream latency closely.",
+      info:     "Configuration change propagated. No adverse impact detected on downstream systems.",
+      success:  "Deployment verified across the integration chain. All downstream health checks passing.",
     };
     return {
       source,
       affectedNodes: affected,
       affectedCount: affected.length,
-      prediction: msgs[sev] ?? msgs.info,
+      prediction: scenario?.prediction ?? fallbackMsgs[sev] ?? fallbackMsgs.info,
       severity: sev,
-      confidence: sev === "critical" ? 94 : sev === "warning" ? 82 : 76,
+      confidence: scenario?.confidence ?? (sev === "critical" ? 94 : sev === "warning" ? 82 : 76),
+      detail: scenario?.detail,
     };
   }
 
+  // Map node id → source key for scenario lookup
+  const NODE_SOURCE_MAP: Record<string, string> = {
+    azure:      "Azure",
+    jira:       "Jira",
+    mulesoft:   "MuleSoft",
+    orderapi:   "OrderAPI",
+    salesforce: "Salesforce",
+    zoho:       "Zoho",
+  };
+
+  // Each node gets its own realistic severity when clicked
+  const NODE_DEFAULT_SEV: Record<string, string> = {
+    azure:      "success",
+    jira:       "warning",
+    mulesoft:   "critical",
+    orderapi:   "warning",
+    salesforce: "warning",
+    zoho:       "info",
+  };
+
   function handleNodeClick(node: ServiceNode) {
-    runBlastRadius(node.source, "warning", `Manual blast radius analysis from ${node.label}`);
+    const src = NODE_SOURCE_MAP[node.id] ?? node.source;
+    const sev = NODE_DEFAULT_SEV[node.id] ?? "warning";
+    const affected = BLAST_MAP[src] ?? [node.id];
+    setActiveNodes(new Set(affected));
+    setBlastResult(mockBlast(src, affected, sev));
   }
 
   function clearBlast() {
@@ -409,7 +578,12 @@ export function DependencyGraph({ liveEvents = [] }: { liveEvents?: any[] }) {
                     })}
                   </div>
 
-                  <p className="text-xs" style={{ color: "var(--foreground)" }}>{blastResult.prediction}</p>
+                  <p className="text-xs mb-2" style={{ color: "var(--foreground)" }}>{blastResult.prediction}</p>
+                  {blastResult.detail && (
+                    <p className="text-[10px] font-mono px-2 py-1 rounded-lg" style={{ color: blastColor, background: `${blastColor}10`, opacity: 0.85 }}>
+                      {blastResult.detail}
+                    </p>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -429,23 +603,34 @@ export function DependencyGraph({ liveEvents = [] }: { liveEvents?: any[] }) {
 
         {/* ── Quick trigger row ── */}
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: "var(--muted-foreground)" }}>
-            Simulate blast from:
+          <span className="text-[10px] font-semibold uppercase tracking-wide shrink-0" style={{ color: "var(--muted-foreground)" }}>
+            Simulate:
           </span>
-          {(["Azure", "MuleSoft", "Jira", "Zoho"] as const).map(src => (
-            <button
-              key={src}
-              onClick={() => runBlastRadius(src, src === "MuleSoft" ? "critical" : "warning", `Simulated ${src} incident`)}
-              className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition hover:opacity-80"
-              style={{
-                background: "rgba(124,110,245,0.08)",
-                border: "1px solid rgba(124,110,245,0.18)",
-                color: "#9b8ff5",
-              }}
-            >
-              <ChevronRight className="h-2.5 w-2.5" />{src}
-            </button>
-          ))}
+          {([
+            { src: "Azure",      sev: "success",  label: "Azure Deploy"   },
+            { src: "MuleSoft",   sev: "critical", label: "MuleSoft Down"  },
+            { src: "Jira",       sev: "warning",  label: "Jira Lag"       },
+            { src: "OrderAPI",   sev: "critical", label: "Order API 500"  },
+            { src: "Salesforce", sev: "warning",  label: "SF Rate Limit"  },
+            { src: "Zoho",       sev: "info",     label: "Zoho Update"    },
+          ] as const).map(({ src, sev, label }) => {
+            const col = sev === "critical" ? "#e05c5c" : sev === "warning" ? "#f0a500" : sev === "success" ? "#52b788" : "#4da8da";
+            const affected = BLAST_MAP[src] ?? [src.toLowerCase()];
+            return (
+              <button
+                key={src}
+                onClick={() => { setActiveNodes(new Set(affected)); setBlastResult(mockBlast(src, affected, sev)); }}
+                className="inline-flex items-center gap-1 text-[10px] font-semibold px-2.5 py-1 rounded-lg transition hover:opacity-80"
+                style={{
+                  background: `${col}12`,
+                  border: `1px solid ${col}35`,
+                  color: col,
+                }}
+              >
+                <ChevronRight className="h-2.5 w-2.5" />{label}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
