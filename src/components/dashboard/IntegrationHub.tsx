@@ -179,9 +179,29 @@ function TabHeader({ subtitle, url, label, isLive, onReport, system, stats, item
 // ══════════════════════════════════════════════════════════════════════════════
 function ZohoTab() {
   const { tickets, stats, status, lastEvent, processing } = useTicketPipeline();
-  const [expanded,    setExpanded]    = useState(false);
-  const [showReport,  setShowReport]  = useState(false);
+  const [expanded,      setExpanded]      = useState(false);
+  const [showReport,    setShowReport]    = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [pptLoading,    setPptLoading]    = useState(false);
+
+  async function downloadPPT() {
+    setPptLoading(true);
+    try {
+      const res = await fetch(`${BACKEND}/generate-ppt`, { method: "POST" });
+      if (!res.ok) throw new Error("Server error");
+      const blob = await res.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = "Synapse-Governance-Report.pptx";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Failed to generate PPT. Make sure the server is running.");
+    } finally {
+      setPptLoading(false);
+    }
+  }
 
   const isLive   = status === "connected";
   const visible  = expanded ? tickets : tickets.slice(0, 6);
@@ -228,6 +248,19 @@ function ZohoTab() {
           </span>
         )}
       </div>
+
+      {/* PPT Download button */}
+      <button
+        onClick={downloadPPT}
+        disabled={pptLoading}
+        className="w-full inline-flex items-center justify-center gap-2 h-9 px-4 rounded-xl text-xs font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+        style={{ background: "linear-gradient(135deg,#191723,#C6C1F7 280%)", border: "1px solid rgba(198,193,247,0.35)" }}
+      >
+        {pptLoading
+          ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Generating PPT…</>
+          : <><Download className="h-3.5 w-3.5" /> Download Governance Report (.pptx)</>
+        }
+      </button>
 
       {/* Drop-zone hint */}
       <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 text-xs"
