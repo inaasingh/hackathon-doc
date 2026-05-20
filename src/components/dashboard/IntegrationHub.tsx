@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Ticket, AlertTriangle, CheckCircle2, Clock, Pause,
-  RefreshCw, ExternalLink, ChevronDown, ChevronUp,
-  AlertCircle, BarChart3, FileDown, Loader2,
+  ExternalLink, ChevronDown, ChevronUp,
+  AlertCircle, BarChart3, Loader2,
   Activity, CloudCog, Wifi, WifiOff, X, Download,
-  Server, Zap,
+  Server, Zap, Brain, Radio,
 } from "lucide-react";
 import {
-  ZOHO_TICKETS, MULESOFT_APIS, MULESOFT_ALERTS,
+  MULESOFT_APIS, MULESOFT_ALERTS,
   MULESOFT_SCHEDULERS, JIRA_TICKETS,
 } from "@/data/mockIntegrationData";
+import { useTicketPipeline } from "@/hooks/useTicketPipeline";
 
 const BACKEND = "http://localhost:3001";
 
@@ -174,59 +175,115 @@ function TabHeader({ subtitle, url, label, isLive, onReport, system, stats, item
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ZOHO TAB
+// ZOHO TAB — Real-time pipeline via WebSocket
 // ══════════════════════════════════════════════════════════════════════════════
 function ZohoTab() {
-  const [tickets,   setTickets]   = useState<any[]>(ZOHO_TICKETS);
-  const [stats,     setStats]     = useState<any>(null);
-  const [loading,   setLoading]   = useState(true);
-  const [isLive,    setIsLive]    = useState(false);
-  const [expanded,  setExpanded]  = useState(false);
-  const [showReport,setShowReport]= useState(false);
+  const { tickets, stats, status, lastEvent, processing } = useTicketPipeline();
+  const [expanded,    setExpanded]    = useState(false);
+  const [showReport,  setShowReport]  = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const r = await fetch(`${BACKEND}/zoho/tickets?limit=50`);
-        if (r.ok) {
-          const d = await r.json();
-          if (d.tickets?.length) { setTickets(d.tickets); setStats(d.summary); setIsLive(true); }
-        }
-      } catch {}
-      setLoading(false);
-    })();
-  }, []);
-
-  const live    = stats ?? { total: tickets.length, open: tickets.filter(t=>t.status==="Open").length, onHold: tickets.filter(t=>t.status==="On Hold").length, resolved: tickets.filter(t=>["Resolved","Closed"].includes(t.status)).length };
-  const visible = expanded ? tickets : tickets.slice(0, 5);
+  const isLive   = status === "connected";
+  const visible  = expanded ? tickets : tickets.slice(0, 6);
+  const liveStats = stats ?? {
+    total: tickets.length,
+    open:  tickets.filter(t => t.status === "Open").length,
+    onHold: tickets.filter(t => t.status === "On Hold").length,
+    resolved: tickets.filter(t => ["Resolved","Closed"].includes(t.status)).length,
+  };
 
   return (
     <div className="space-y-4">
-      {showReport && <ReportModal system="zoho" stats={live} items={tickets} onClose={() => setShowReport(false)} />}
+      {showReport && <ReportModal system="zoho" stats={liveStats} items={tickets} onClose={() => setShowReport(false)} />}
+      {selectedTicket && <TicketDetailModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />}
 
-      <TabHeader subtitle={`${live.total} tickets · Zoho Desk`} url="https://desk.zoho.in" label="Zoho Desk"
-        isLive={isLive} onReport={() => setShowReport(true)} system="zoho" stats={live} items={tickets} />
+      {/* Header */}
+      <TabHeader
+        subtitle={`${liveStats.total} tickets · Synapse Pipeline`}
+        url="https://desk.zoho.in" label="Zoho Desk"
+        isLive={isLive} onReport={() => setShowReport(true)}
+        system="zoho" stats={liveStats} items={tickets}
+      />
 
-      {loading ? (
+      {/* Pipeline status bar */}
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs"
+        style={{
+          background: status === "connected" ? "rgba(82,183,136,0.06)" : "rgba(240,165,0,0.06)",
+          border: `1px solid ${status === "connected" ? "rgba(82,183,136,0.2)" : "rgba(240,165,0,0.2)"}`,
+        }}>
+        <Radio className="h-3 w-3 shrink-0" style={{ color: status === "connected" ? "#52b788" : "#f0a500" }} />
+        <span style={{ color: status === "connected" ? "#52b788" : "#f0a500" }}>
+          {status === "connected" ? "Pipeline live" : status === "connecting" ? "Connecting…" : "Pipeline offline — run: node pipeline.js"}
+        </span>
+        {processing && (
+          <span className="flex items-center gap-1 ml-auto" style={{ color: "#9b8ff5" }}>
+            <Loader2 className="h-3 w-3 animate-spin" />
+            <Brain className="h-3 w-3" />
+            AI processing…
+          </span>
+        )}
+        {lastEvent && !processing && (
+          <span className="ml-auto text-[10px] truncate max-w-[200px]" style={{ color: "var(--muted-foreground)" }}>
+            {lastEvent}
+          </span>
+        )}
+      </div>
+
+      {/* Drop-zone hint */}
+      <div className="rounded-xl px-4 py-2.5 flex items-center gap-2 text-xs"
+        style={{ background: "rgba(124,110,245,0.05)", border: "1px dashed rgba(124,110,245,0.2)" }}>
+        <Zap className="h-3.5 w-3.5 shrink-0" style={{ color: "#9b8ff5" }} />
+        <span style={{ color: "var(--muted-foreground)" }}>
+          Drop any <code className="px-1 rounded" style={{ background: "var(--muted)" }}>.json</code> ticket file into{" "}
+          <code className="px-1 rounded" style={{ background: "var(--muted)" }}>server/data/inbox/</code>{" "}
+          → AI auto-classifies &amp; updates here in real-time. Use{" "}
+          <strong style={{ color: "#9b8ff5" }}>sample-new-ticket.json</strong> to test.
+        </span>
+      </div>
+
+      {/* Stats */}
+      <StatCards cards={[
+        { label: "Total",    value: liveStats.total,    col: "#7c6ef5", bg: "#ede8ff", Icon: Ticket       },
+        { label: "Open",     value: liveStats.open,     col: "#e05c5c", bg: "#ffeaea", Icon: AlertCircle  },
+        { label: "On Hold",  value: liveStats.onHold,   col: "#f0a500", bg: "#fff7e6", Icon: Pause        },
+        { label: "Resolved", value: liveStats.resolved, col: "#52b788", bg: "#edfaf3", Icon: CheckCircle2 },
+      ]} />
+
+      {/* Avg urgency bar */}
+      {stats && (
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--muted)" }}>
+            <div className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${stats.avgUrgency}%`,
+                background: stats.avgUrgency > 75 ? "#e05c5c" : stats.avgUrgency > 50 ? "#f0a500" : "#52b788",
+              }} />
+          </div>
+          <span className="text-[10px] font-semibold shrink-0" style={{ color: "var(--muted-foreground)" }}>
+            Avg AI urgency: <strong style={{ color: stats.avgUrgency > 75 ? "#e05c5c" : "#f0a500" }}>{stats.avgUrgency}</strong>/100
+          </span>
+        </div>
+      )}
+
+      {/* Ticket list */}
+      {status === "connecting" && tickets.length === 0 ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-4">
-          <Loader2 className="h-4 w-4 animate-spin" /> Fetching live Zoho tickets…
+          <Loader2 className="h-4 w-4 animate-spin" /> Connecting to pipeline…
         </div>
       ) : (
-        <>
-          <StatCards cards={[
-            { label: "Total",    value: live.total,    col: "#7c6ef5", bg: "#ede8ff", Icon: Ticket       },
-            { label: "Open",     value: live.open,     col: "#e05c5c", bg: "#ffeaea", Icon: AlertCircle  },
-            { label: "On Hold",  value: live.onHold ?? live.pending ?? 0, col: "#f0a500", bg: "#fff7e6", Icon: Pause },
-            { label: "Resolved", value: live.resolved, col: "#52b788", bg: "#edfaf3", Icon: CheckCircle2 },
-          ]} />
+        <div className="space-y-2">
+          {visible.map((t: any) => {
+            const sCfg = statusCfg[t.status] ?? statusCfg["Open"];
+            const pCfg = priorityCfg[t.priority] ?? priorityCfg["Medium"];
+            const SI   = sCfg.Icon;
+            const ai   = t.aiAnalysis;
 
-          <div className="space-y-1.5">
-            {visible.map((t: any) => {
-              const sCfg = statusCfg[t.status] ?? statusCfg["Open"];
-              const pCfg = priorityCfg[t.priority] ?? priorityCfg["Medium"];
-              const SI   = sCfg.Icon;
-              return (
-                <div key={t.id} className="flex items-start gap-3 rounded-xl p-3 hover:bg-secondary/40 transition border border-transparent hover:border-border">
+            return (
+              <button key={t.id}
+                onClick={() => setSelectedTicket(t)}
+                className="w-full text-left rounded-xl p-3 hover:bg-secondary/40 transition border border-transparent hover:border-border"
+                style={{ background: t.isEscalated ? "rgba(224,92,92,0.04)" : "transparent" }}>
+                <div className="flex items-start gap-3">
                   <div className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: sCfg.bg }}>
                     <SI className="h-3.5 w-3.5" style={{ color: sCfg.col }} />
                   </div>
@@ -236,23 +293,155 @@ function ZohoTab() {
                       <span className="text-[10px] font-mono" style={{ color: "var(--muted-foreground)" }}>#{t.id}</span>
                       <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: sCfg.bg, color: sCfg.col }}>{t.status}</span>
                       <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: pCfg.bg, color: pCfg.col }}>{t.priority}</span>
-                      <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{t.departmentName ?? t.dept}</span>
-                      <span className="text-[10px] ml-auto" style={{ color: "var(--muted-foreground)" }}>{t.age ?? ""}</span>
+                      <span className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{t.department?.name ?? ""}</span>
+                      {t.isEscalated && (
+                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#ffeaea", color: "#e05c5c" }}>ESCALATED</span>
+                      )}
                     </div>
+                    {/* AI urgency bar */}
+                    {ai && (
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <Brain className="h-2.5 w-2.5 shrink-0" style={{ color: "#9b8ff5" }} />
+                        <div className="flex-1 h-1 rounded-full" style={{ background: "var(--muted)" }}>
+                          <div className="h-full rounded-full"
+                            style={{
+                              width: `${ai.urgencyScore}%`,
+                              background: ai.urgencyScore > 80 ? "#e05c5c" : ai.urgencyScore > 60 ? "#f0a500" : "#52b788",
+                            }} />
+                        </div>
+                        <span className="text-[9px] font-semibold shrink-0" style={{ color: "var(--muted-foreground)" }}>
+                          {ai.urgencyScore}/100
+                        </span>
+                      </div>
+                    )}
                   </div>
+                  <span className="text-[10px] shrink-0 mt-0.5" style={{ color: "var(--muted-foreground)" }}>
+                    {new Date(t.createdTime).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-          {tickets.length > 5 && (
-            <button onClick={() => setExpanded(e => !e)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium hover:bg-secondary/40 transition"
-              style={{ border: "1px dashed rgba(124,110,245,0.20)", color: "var(--muted-foreground)" }}>
-              {expanded ? <><ChevronUp className="h-3.5 w-3.5" /> Show less</> : <><ChevronDown className="h-3.5 w-3.5" /> Show {tickets.length - 5} more</>}
-            </button>
-          )}
-        </>
+              </button>
+            );
+          })}
+        </div>
       )}
+
+      {tickets.length > 6 && (
+        <button onClick={() => setExpanded(e => !e)}
+          className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium hover:bg-secondary/40 transition"
+          style={{ border: "1px dashed rgba(124,110,245,0.20)", color: "var(--muted-foreground)" }}>
+          {expanded ? <><ChevronUp className="h-3.5 w-3.5" /> Show less</> : <><ChevronDown className="h-3.5 w-3.5" /> Show {tickets.length - 6} more</>}
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ── Ticket detail modal with AI analysis ─────────────────────────────────────
+function TicketDetailModal({ ticket, onClose }: { ticket: any; onClose: () => void }) {
+  const ai  = ticket.aiAnalysis;
+  const sCfg = statusCfg[ticket.status] ?? statusCfg["Open"];
+  const pCfg = priorityCfg[ticket.priority] ?? priorityCfg["Medium"];
+  const SI   = sCfg.Icon;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="w-full max-w-lg max-h-[85vh] flex flex-col rounded-2xl overflow-hidden shadow-2xl"
+        style={{ background: "var(--card)", border: "1px solid rgba(124,110,245,0.2)" }}>
+
+        {/* Header */}
+        <div className="flex items-start gap-3 px-5 py-4 shrink-0"
+          style={{ borderBottom: "1px solid rgba(124,110,245,0.08)" }}>
+          <div className="h-8 w-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: sCfg.bg }}>
+            <SI className="h-4 w-4" style={{ color: sCfg.col }} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold leading-snug" style={{ color: "var(--foreground)" }}>{ticket.subject}</p>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <span className="text-[10px] font-mono font-bold" style={{ color: "#9b8ff5" }}>#{ticket.id}</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: sCfg.bg, color: sCfg.col }}>{ticket.status}</span>
+              <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full" style={{ background: pCfg.bg, color: pCfg.col }}>{ticket.priority}</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="h-7 w-7 rounded-lg flex items-center justify-center hover:bg-secondary transition shrink-0">
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {/* Description */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "var(--muted-foreground)" }}>Description</p>
+            <p className="text-xs leading-5" style={{ color: "var(--foreground)" }}>{ticket.description}</p>
+          </div>
+
+          {/* Contact + Dept */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-xl p-3" style={{ background: "var(--background)", border: "1px solid rgba(124,110,245,0.08)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "var(--muted-foreground)" }}>Contact</p>
+              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{ticket.contact?.firstName} {ticket.contact?.lastName}</p>
+              <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{ticket.contact?.email}</p>
+            </div>
+            <div className="rounded-xl p-3" style={{ background: "var(--background)", border: "1px solid rgba(124,110,245,0.08)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "var(--muted-foreground)" }}>Department</p>
+              <p className="text-xs font-semibold" style={{ color: "var(--foreground)" }}>{ticket.department?.name}</p>
+              <p className="text-[10px]" style={{ color: "var(--muted-foreground)" }}>{ticket.channel} · {ticket.classification}</p>
+            </div>
+          </div>
+
+          {/* AI Analysis */}
+          {ai && (
+            <div className="rounded-xl p-4 space-y-3"
+              style={{ background: "rgba(155,143,245,0.06)", border: "1px solid rgba(155,143,245,0.2)" }}>
+              <div className="flex items-center gap-2">
+                <Brain className="h-4 w-4" style={{ color: "#9b8ff5" }} />
+                <p className="text-xs font-bold" style={{ color: "#9b8ff5" }}>AI Analysis — Groq LLaMA 3</p>
+                <span className="ml-auto text-[10px] px-2 py-0.5 rounded-full font-bold"
+                  style={{ background: ai.urgencyScore > 80 ? "#ffeaea" : ai.urgencyScore > 60 ? "#fff7e6" : "#edfaf3",
+                           color: ai.urgencyScore > 80 ? "#e05c5c" : ai.urgencyScore > 60 ? "#f0a500" : "#52b788" }}>
+                  Urgency {ai.urgencyScore}/100
+                </span>
+              </div>
+
+              <div>
+                <p className="text-[10px] font-semibold mb-1" style={{ color: "var(--muted-foreground)" }}>PATTERN DETECTED</p>
+                <p className="text-xs" style={{ color: "var(--foreground)" }}>{ai.pattern}</p>
+              </div>
+
+              {ai.riskFlag && (
+                <div className="flex items-start gap-2 rounded-lg px-3 py-2"
+                  style={{ background: "rgba(224,92,92,0.08)", border: "1px solid rgba(224,92,92,0.2)" }}>
+                  <AlertTriangle className="h-3 w-3 shrink-0 mt-0.5 text-[#e05c5c]" />
+                  <p className="text-[11px]" style={{ color: "#e05c5c" }}>{ai.riskFlag}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-[10px] font-semibold mb-1.5" style={{ color: "var(--muted-foreground)" }}>AI DRAFT RESPONSE</p>
+                <div className="rounded-lg p-3 text-xs leading-5"
+                  style={{ background: "var(--card)", border: "1px solid rgba(124,110,245,0.12)", color: "var(--foreground)" }}>
+                  {ai.draftResponse}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-[10px]" style={{ color: "var(--muted-foreground)" }}>
+                <span>Est. resolution: <strong style={{ color: "var(--foreground)" }}>{ai.estimatedResolutionHours}h</strong></span>
+                <span>Category: <strong style={{ color: "var(--foreground)" }}>{ai.category}</strong></span>
+                <span className="ml-auto">Processed: {new Date(ai.processedAt).toLocaleTimeString("en-GB")}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Resolution if closed */}
+          {ticket.resolution && (
+            <div className="rounded-xl p-3" style={{ background: "rgba(82,183,136,0.06)", border: "1px solid rgba(82,183,136,0.2)" }}>
+              <p className="text-[10px] font-bold uppercase tracking-wide mb-1" style={{ color: "#52b788" }}>Resolution</p>
+              <p className="text-xs" style={{ color: "var(--foreground)" }}>{ticket.resolution}</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
