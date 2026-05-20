@@ -3,15 +3,51 @@
  * Shows on first load: time-based greeting → system status items → enter dashboard
  */
 import { useEffect, useState } from "react";
-import { ArrowRight, CheckCircle2, AlertCircle, Activity, Zap, Brain, Radio } from "lucide-react";
+import { ArrowRight, LayoutDashboard, Ticket, FileBarChart2, Bell, Presentation, ShieldCheck } from "lucide-react";
 
 const ITEMS = [
-  { icon: Activity,     color: "#52b788", label: "5 integrations connected",          delay: 600  },
-  { icon: CheckCircle2, color: "#52b788", label: "MuleSoft pipeline — operational",   delay: 1000 },
-  { icon: AlertCircle,  color: "#e05c5c", label: "2 urgent tickets need attention",   delay: 1400 },
-  { icon: Radio,        color: "#9b8ff5", label: "Real-time ticket pipeline — live",  delay: 1800 },
-  { icon: Brain,        color: "#C6C1F7", label: "Groq AI classification — ready",    delay: 2200 },
-  { icon: Zap,          color: "#f0a500", label: "Governance report available",       delay: 2600 },
+  {
+    icon: LayoutDashboard,
+    color: "#C6C1F7",
+    label: "One place for all your support operations",
+    desc:  "See every team, every ticket, and every system — all in a single view.",
+    delay: 600,
+  },
+  {
+    icon: Ticket,
+    color: "#52b788",
+    label: "AI reads and prioritises your tickets automatically",
+    desc:  "Every incoming support ticket is scored, categorised and given a draft response — without anyone lifting a finger.",
+    delay: 1050,
+  },
+  {
+    icon: Bell,
+    color: "#e05c5c",
+    label: "Get alerted before issues become problems",
+    desc:  "Critical events across MuleSoft, Jira, Zoho and Datadog surface instantly so your team can act fast.",
+    delay: 1500,
+  },
+  {
+    icon: ShieldCheck,
+    color: "#ACEDF3",
+    label: "Root cause analysis in seconds",
+    desc:  "When something breaks, AI traces it back to the source and tells you exactly what happened and why.",
+    delay: 1950,
+  },
+  {
+    icon: FileBarChart2,
+    color: "#f0a500",
+    label: "Governance reports written for you",
+    desc:  "Weekly and monthly reports — with highlights, lowlights and key asks — generated automatically from live data.",
+    delay: 2400,
+  },
+  {
+    icon: Presentation,
+    color: "#FE92C9",
+    label: "Download a boardroom-ready PowerPoint instantly",
+    desc:  "One click exports a fully branded presentation that's ready to share with senior stakeholders.",
+    delay: 2850,
+  },
 ];
 
 function getGreeting() {
@@ -40,7 +76,7 @@ export function DashboardIntro({ onEnter }: { onEnter: () => void }) {
       }, item.delay));
     });
 
-    timers.push(setTimeout(() => setBtnVisible(true), 3100));
+    timers.push(setTimeout(() => setBtnVisible(true), 3500));
 
     return () => timers.forEach(clearTimeout);
   }, []);
@@ -65,7 +101,7 @@ export function DashboardIntro({ onEnter }: { onEnter: () => void }) {
       <div style={{ position: "absolute", bottom: "10%", right: "15%", width: 300, height: 300, borderRadius: "50%", background: "rgba(198,193,247,0.05)", filter: "blur(60px)", pointerEvents: "none" }} />
       <div style={{ position: "absolute", top: "40%",  right: "25%",  width: 200, height: 200, borderRadius: "50%", background: "rgba(82,183,136,0.04)", filter: "blur(50px)", pointerEvents: "none" }} />
 
-      <div className="relative z-10 w-full max-w-lg px-8">
+      <div className="relative z-10 w-full max-w-xl px-8">
 
         {/* Greeting */}
         <div
@@ -94,7 +130,7 @@ export function DashboardIntro({ onEnter }: { onEnter: () => void }) {
           }}
         >
           <p className="text-sm" style={{ color: "rgba(243,242,255,0.45)" }}>
-            Here's a quick snapshot of your platform before you dive in.
+            Your AI-powered command centre for retail support operations.
           </p>
         </div>
 
@@ -109,8 +145,8 @@ export function DashboardIntro({ onEnter }: { onEnter: () => void }) {
           }}
         />
 
-        {/* Status items */}
-        <div className="space-y-3 mb-8">
+        {/* Feature items */}
+        <div className="space-y-2.5 mb-8">
           {ITEMS.map((item, i) => {
             const visible = visibleItems.includes(i);
             const Icon = item.icon;
@@ -119,37 +155,36 @@ export function DashboardIntro({ onEnter }: { onEnter: () => void }) {
                 key={i}
                 style={{
                   opacity: visible ? 1 : 0,
-                  transform: visible ? "translateX(0)" : "translateX(-12px)",
-                  transition: "opacity 0.4s ease, transform 0.4s ease",
+                  transform: visible ? "translateX(0)" : "translateX(-14px)",
+                  transition: "opacity 0.45s ease, transform 0.45s ease",
                   display: "flex",
-                  alignItems: "center",
+                  alignItems: "flex-start",
                   gap: "12px",
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  background: visible ? `${item.color}08` : "transparent",
+                  border: `1px solid ${visible ? item.color + "20" : "transparent"}`,
                 }}
               >
                 <div
                   style={{
-                    width: 32, height: 32, borderRadius: 10, flexShrink: 0,
+                    width: 34, height: 34, borderRadius: 10, flexShrink: 0,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     background: `${item.color}18`,
-                    border: `1px solid ${item.color}30`,
+                    border: `1px solid ${item.color}35`,
+                    marginTop: 1,
                   }}
                 >
-                  <Icon style={{ width: 14, height: 14, color: item.color }} />
+                  <Icon style={{ width: 15, height: 15, color: item.color }} />
                 </div>
-                <span className="text-sm" style={{ color: "rgba(243,242,255,0.75)" }}>
-                  {item.label}
-                </span>
-                {visible && (
-                  <span
-                    style={{
-                      marginLeft: "auto", fontSize: 10, fontWeight: 600,
-                      color: item.color, opacity: 0.8,
-                      animation: "fadeIn 0.3s ease",
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p className="text-sm font-semibold" style={{ color: "rgba(243,242,255,0.92)", marginBottom: 2 }}>
+                    {item.label}
+                  </p>
+                  <p className="text-xs leading-relaxed" style={{ color: "rgba(243,242,255,0.42)" }}>
+                    {item.desc}
+                  </p>
+                </div>
               </div>
             );
           })}
