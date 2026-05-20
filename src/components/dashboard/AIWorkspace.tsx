@@ -1,20 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Sparkles, RefreshCw, Copy, Download, CheckCheck, Loader2,
-  Wifi, WifiOff, AlertCircle, CheckCircle2, Clock, BarChart2,
 } from "lucide-react";
 import {
   generateGovernanceReport,
   generateWeeklyReport,
   generateImpactAnalysis,
-  generateZohoReport,
 } from "../../lib/claudeApi";
 
 const tabs = [
   { id: "CR Document",        label: "CR Document"        },
   { id: "Governance Summary", label: "Governance Summary" },
   { id: "Weekly Report",      label: "Weekly Report"      },
-  { id: "Zoho Support",       label: "Zoho Support"       },
   { id: "Executive Summary",  label: "Executive Summary"  },
   { id: "Health Analysis",    label: "Health Analysis"    },
 ];
@@ -41,21 +38,12 @@ Overall Platform Health: 94.3%
 AI Recommendation: Enable proactive alerting for MuleSoft APIs.`,
 };
 
-interface ZohoStats {
-  total: number;
-  open: number;
-  pending: number;
-  resolved: number;
-  critical: number;
-}
 
 export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
   const [activeTab,   setActiveTab]   = useState("CR Document");
   const [content,     setContent]     = useState("");
   const [loading,     setLoading]     = useState(false);
   const [copied,      setCopied]      = useState(false);
-  const [zohoStats,   setZohoStats]   = useState<ZohoStats | null>(null);
-  const [zohoMock,    setZohoMock]    = useState(true);
 
   const selectedEventRef = useRef(selectedEvent);
   useEffect(() => { selectedEventRef.current = selectedEvent; }, [selectedEvent]);
@@ -87,12 +75,6 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
       } else if (activeTab === "Weekly Report") {
         setContent(await generateWeeklyReport([event]));
 
-      } else if (activeTab === "Zoho Support") {
-        const { report, stats, usedMock } = await generateZohoReport();
-        setContent(report);
-        setZohoStats(stats);
-        setZohoMock(usedMock);
-      }
     } catch {
       setContent("Unable to generate content. Make sure the server is running on port 3001.");
     }
@@ -117,10 +99,6 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
     a.download = `${activeTab.replace(/\s/g, "-").toLowerCase()}-${new Date().toISOString().slice(0,10)}.txt`;
     a.click();
   }
-
-  const resolutionRate = zohoStats && zohoStats.total > 0
-    ? Math.round((zohoStats.resolved / zohoStats.total) * 100)
-    : 0;
 
   return (
     <div
@@ -201,64 +179,9 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
             }`}
           >
             {tab.label}
-            {tab.id === "Zoho Support" && (
-              <span className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full align-middle"
-                style={{ background: zohoMock ? "#f0a500" : "#52b788" }} />
-            )}
           </button>
         ))}
       </div>
-
-      {/* ── ZOHO STATS BAR (only on Zoho tab) ── */}
-      {activeTab === "Zoho Support" && (
-        <div className="shrink-0 mb-3 space-y-2">
-          {zohoStats ? (
-            <>
-              <div className="grid grid-cols-5 gap-1.5">
-                {[
-                  { label: "Total",    val: zohoStats.total,    col: "#9b8ff5", Icon: BarChart2    },
-                  { label: "Open",     val: zohoStats.open,     col: "#e05c5c", Icon: AlertCircle  },
-                  { label: "Pending",  val: zohoStats.pending,  col: "#f0a500", Icon: Clock        },
-                  { label: "Resolved", val: zohoStats.resolved, col: "#52b788", Icon: CheckCircle2 },
-                  { label: "Critical", val: zohoStats.critical, col: "#e05c5c", Icon: AlertCircle  },
-                ].map(({ label, val, col }) => (
-                  <div key={label} className="rounded-lg p-2 text-center" style={{ background: `${col}10`, border: `1px solid ${col}25` }}>
-                    <p className="text-base font-bold leading-none" style={{ color: col }}>{val}</p>
-                    <p className="text-[9px] mt-1" style={{ color: "var(--muted-foreground)" }}>{label}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full" style={{ background: "var(--muted)" }}>
-                  <div className="h-full rounded-full transition-all duration-700"
-                    style={{
-                      width: `${resolutionRate}%`,
-                      background: resolutionRate >= 70 ? "#52b788" : resolutionRate >= 40 ? "#f0a500" : "#e05c5c",
-                    }} />
-                </div>
-                <span className="text-[10px] font-semibold shrink-0" style={{ color: resolutionRate >= 70 ? "#52b788" : "#f0a500" }}>
-                  {resolutionRate}% resolved
-                </span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-1 shrink-0"
-                  style={{
-                    background: zohoMock ? "rgba(240,165,0,0.10)" : "rgba(82,183,136,0.10)",
-                    color: zohoMock ? "#f0a500" : "#52b788",
-                    border: `1px solid ${zohoMock ? "rgba(240,165,0,0.2)" : "rgba(82,183,136,0.2)"}`,
-                  }}>
-                  {zohoMock ? <WifiOff className="h-2.5 w-2.5" /> : <Wifi className="h-2.5 w-2.5" />}
-                  {zohoMock ? "Mock data" : "Live Zoho"}
-                </span>
-              </div>
-            </>
-          ) : !loading && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs"
-              style={{ background: "rgba(240,165,0,0.06)", border: "1px solid rgba(240,165,0,0.15)", color: "#f0a500" }}>
-              <Clock className="h-3.5 w-3.5 shrink-0" />
-              Click Generate to pull Zoho ticket data and create an AI report
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── CONTENT AREA ── */}
       <div
@@ -268,11 +191,7 @@ export function AIWorkspace({ selectedEvent }: { selectedEvent: any }) {
         {loading ? (
           <div className="h-full flex flex-col items-center justify-center gap-3 text-muted-foreground">
             <Loader2 className="h-7 w-7 animate-spin text-primary" />
-            <p className="text-xs">
-              {activeTab === "Zoho Support"
-                ? "Fetching Zoho tickets and generating report…"
-                : `Generating ${activeTab}…`}
-            </p>
+            <p className="text-xs">Generating {activeTab}…</p>
           </div>
         ) : (
           <pre className="whitespace-pre-wrap text-xs leading-6 text-foreground/85 font-sans">
