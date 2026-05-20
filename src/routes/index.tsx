@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/dashboard/Sidebar";
-import { MetricCards } from "@/components/dashboard/MetricCards";
 import { EventStream } from "@/components/dashboard/EventStream";
 import { AIWorkspace } from "@/components/dashboard/AIWorkspace";
 import { WebhookTrigger } from "@/components/dashboard/WebhookTrigger";
@@ -17,7 +16,7 @@ import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
 import { mockEvents } from "@/data/mockEvents";
 import {
   Bell, Search, AlertCircle, CheckCircle2, Clock,
-  ArrowRight, Sun, Moon, Gamepad2,
+  Sun, Moon, Gamepad2,
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
@@ -152,11 +151,11 @@ function Dashboard() {
           </div>
         </div>
 
-        <div className="p-8 space-y-5">
+        <div className="p-6 space-y-5">
 
-          {/* ── WELCOME HERO CARD ── */}
+          {/* ── SLIM HEADER BANNER ── */}
           <div
-            className="rounded-2xl p-7 relative overflow-hidden"
+            className="rounded-2xl px-6 py-4 relative overflow-hidden flex items-center justify-between"
             style={{
               background: dark
                 ? "linear-gradient(135deg,#1e1635 0%,#261f3a 100%)"
@@ -164,40 +163,41 @@ function Dashboard() {
               border: "1px solid rgba(124,110,245,0.12)",
             }}
           >
-            {/* decorative blobs */}
-            <div style={{ position: "absolute", right: "-20px", top: "-30px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(124,110,245,0.08)", filter: "blur(30px)" }} />
-            <div style={{ position: "absolute", right: "80px", bottom: "-20px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(240,180,160,0.18)", filter: "blur(24px)" }} />
-            <div className="relative z-10 flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium mb-1" style={{ color: "#9b8ff5" }}>GOOD DAY 👋</p>
-                <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--foreground)" }}>
-                  Here's your business overview
-                </h2>
-                <p className="text-sm" style={{ color: "var(--foreground)" }}>
-                  <strong style={{ color: "#7c6ef5" }}>94.3%</strong> of your systems are healthy &nbsp;·&nbsp;
-                  <strong style={{ color: "#7c6ef5" }}>47</strong> updates since yesterday &nbsp;·&nbsp;
-                  <strong style={{ color: "#e05c5c" }}>2</strong> issues need your attention
-                </p>
-                <button
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-white transition hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg,#7c6ef5,#a78ef8)" }}
-                >
-                  View full report <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="hidden lg:block text-6xl select-none">📊</div>
+            <div style={{ position: "absolute", right: "-10px", top: "-20px", width: "120px", height: "120px", borderRadius: "50%", background: "rgba(124,110,245,0.07)", filter: "blur(24px)" }} />
+            <div className="relative z-10">
+              <p className="text-xs font-medium mb-0.5" style={{ color: "#9b8ff5" }}>GOOD DAY 👋</p>
+              <p className="text-sm" style={{ color: "var(--foreground)" }}>
+                <strong style={{ color: "#7c6ef5" }}>94.3%</strong> of systems healthy &nbsp;·&nbsp;
+                <strong style={{ color: "#e05c5c" }}>2</strong> urgent issues &nbsp;·&nbsp;
+                <strong style={{ color: "#7c6ef5" }}>47</strong> updates today
+              </p>
+            </div>
+            <div className="relative z-10 flex items-center gap-2 shrink-0">
+              {[
+                { label: "Order API",  pct: 65, col: "#e05c5c" },
+                { label: "MuleSoft",   pct: 99, col: "#52b788" },
+                { label: "Salesforce", pct: 72, col: "#f0a500" },
+              ].map(s => (
+                <div key={s.label} className="hidden md:flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl"
+                  style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(124,110,245,0.1)" }}>
+                  <span className="text-xs font-bold" style={{ color: s.col }}>{s.pct}%</span>
+                  <span className="text-[10px] text-muted-foreground">{s.label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* ── METRIC CARDS ── */}
-          <MetricCards />
+          {/* ── INTEGRATION HUB — first thing visible ── */}
+          <div id="integration-hub">
+            <IntegrationHub activeIntegration={activeIntegration} />
+          </div>
 
-          {/* ── 2-COL: EVENT STREAM + QUICK REPORTS + DEPENDENCY GRAPH | AI WORKSPACE ── */}
+          {/* ── 2-COL: EVENT STREAM + DEPENDENCY GRAPH | AI WORKSPACE ── */}
           <div className="grid grid-cols-5 gap-5 items-start">
             <div className="col-span-3 flex flex-col gap-5" id="event-stream">
               <EventStream onSelect={setSelectedEvent} liveEvents={liveEvents} />
-              <QuickReports />
               <DependencyGraph liveEvents={liveEvents} />
+              <QuickReports />
             </div>
             <div className="col-span-2 sticky top-[73px]" id="ai-workspace">
               <AIWorkspace selectedEvent={selectedEvent} />
@@ -217,11 +217,6 @@ function Dashboard() {
           {/* ── WEEKLY / MONTHLY SCHEDULES ── */}
           <div id="schedules">
             <Schedules />
-          </div>
-
-          {/* ── INTEGRATION HUB ── */}
-          <div id="integration-hub">
-            <IntegrationHub activeIntegration={activeIntegration} />
           </div>
 
           {/* ── SIMULATE UPDATES ── */}
