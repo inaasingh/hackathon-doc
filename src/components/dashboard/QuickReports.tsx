@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, BarChart2, CalendarDays, HeartPulse, X, Download, ExternalLink, FileText } from "lucide-react";
-import { ZohoReport } from "./ZohoReport";
 
 const reports = [
   {
@@ -84,15 +83,12 @@ export function QuickReports() {
               Click to preview · Download any document
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <ZohoReport />
-            <span
-              className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-              style={{ background: "#ede8ff", color: "#7c6ef5" }}
-            >
-              {reports.length + extraDocs.length} documents
-            </span>
-          </div>
+          <span
+            className="text-[10px] font-medium px-2 py-0.5 rounded-full"
+            style={{ background: "#ede8ff", color: "#7c6ef5" }}
+          >
+            {reports.length + extraDocs.length} documents
+          </span>
         </div>
 
         {/* Main 4 cards */}

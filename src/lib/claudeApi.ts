@@ -1,14 +1,12 @@
-// Claude AI — calls the Vercel serverless proxy (/api/claude)
-// The API key lives in Vercel env vars, never in the browser bundle
+// All AI calls go to the local Express backend at port 3001
+const BACKEND = "http://localhost:3001";
 
-const PROXY = "/api/claude";
-
-// ── Fallback responses used when API key is not set ───────────────
+// ── Fallback responses (used when backend is offline) ─────────────
 const FALLBACK_IMPACT = `WHAT CHANGED
 MuleSoft retry policy on Order API was updated — p95 latency now exceeding 1.8s SLA threshold.
 
 BUSINESS IMPACT
-Downstream services including Inventory Sync and Pricing Engine are experiencing cascading delays of up to 400ms. Customer-facing checkout flows may see increased timeout errors during peak hours.
+Downstream services including Inventory Sync and Pricing Engine are experiencing cascading delays. Customer-facing checkout flows may see increased timeout errors during peak hours.
 
 IMPACTED DOCUMENTS
 - LLD (Order API): Update timeout and retry configuration diagrams
@@ -16,7 +14,7 @@ IMPACTED DOCUMENTS
 
 RECOMMENDED ACTION
 • Roll back MuleSoft retry count to previous value (2 retries) immediately
-• Notify governance lead @priya and schedule emergency change window
+• Notify governance lead and schedule emergency change window
 • Regenerate LLD for Order API and re-run integration test suite
 
 RISK LEVEL: CRITICAL`;
@@ -67,79 +65,81 @@ METRICS SUMMARY
 - Governance health: 94.3% (+1.2%)
 - Critical alerts: 2`;
 
-// ── Core proxy call ───────────────────────────────────────────────
-async function callClaude(prompt: string, type: "analysis" | "chat" | "report"): Promise<string> {
+const FALLBACK_ZOHO = `ZOHO DESK — SUPPORT REPORT
+(Backend offline — showing sample data)
+
+EXECUTIVE SUMMARY
+Support operations are stable this period with a healthy resolution rate across all teams. Two departments are showing elevated open ticket volumes that warrant attention before end of week.
+
+RAG STATUS: AMBER
+
+KEY METRICS
+- Total tickets: 87
+- Open: 24
+- Pending / On Hold: 11
+- Resolved / Closed: 52
+- Critical / Urgent: 8
+- Resolution rate: 60%
+
+TOP ISSUES THIS PERIOD
+• Login and access issues remain the highest-volume category across teams
+• VPN connectivity requests spiked this week — likely related to the network change window
+• Integration sync failures reported by 3 teams — may be related to the MuleSoft config change
+
+RECOMMENDATIONS
+• Assign dedicated triage resource to Barbour Support and Wren Kitchens — both showing 10+ open tickets
+• Create a self-service KB article for VPN setup to reduce repeat tickets
+• Escalate integration sync failures to platform team for root cause review`;
+
+// ── Core backend call ─────────────────────────────────────────────
+async function callBackend(endpoint: string, body: object): Promise<string> {
   try {
-    const res = await fetch(PROXY, {
+    const res = await fetch(`${BACKEND}${endpoint}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ prompt, type }),
+      body: JSON.stringify(body),
     });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      // If API key not configured, fall back to mock responses gracefully
-      if (res.status === 500 && (err as any)?.error?.includes("ANTHROPIC_API_KEY")) {
-        return null as any;
-      }
-      throw new Error((err as any)?.error ?? `HTTP ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return data.text ?? "";
+    return data.text ?? data.report ?? "";
   } catch (e) {
-    console.warn("Claude API unavailable, using fallback:", e);
-    return null as any;
+    console.warn(`[Backend ${endpoint}] unavailable:`, e);
+    return "";
   }
 }
 
 // ── Public exports ────────────────────────────────────────────────
 
 export async function generateImpactAnalysis(event: any): Promise<string> {
-  const prompt = `Analyse this enterprise system change event:
-
-System: ${event?.source ?? "Unknown"}
-Service: ${event?.svc ?? "Unknown service"}
-Summary: ${event?.summary ?? "No details provided"}
-Severity: ${event?.sev ?? "unknown"}
-Confidence: ${event?.conf ?? 0}%
-Affected documents: ${(event?.docs ?? []).join(", ") || "None listed"}
-
-Provide a full impact analysis.`;
-
-  const result = await callClaude(prompt, "analysis");
-  return result ?? FALLBACK_IMPACT;
+  const result = await callBackend("/analyze", { type: "impact", event });
+  return result || FALLBACK_IMPACT;
 }
 
 export async function generateGovernanceReport(events: any[]): Promise<string> {
-  const eventSummary = events.slice(0, 5).map((e: any) =>
-    `• [${e?.source}] ${e?.svc}: ${e?.summary} (${e?.sev})`
-  ).join("\n") || "No recent events";
-
-  const prompt = `Generate a weekly governance report for the AbsoluteLabs Retail Integration Platform.
-
-Recent events (last 5):
-${eventSummary}
-
-Platform stats: 47 total changes this week, 94.3% health, 2 critical alerts, 128 documents generated.
-Include: Executive Summary, RAG Status, Key Highlights, Risks and Issues, Next Week Priorities, Leadership Recommendation.`;
-
-  const result = await callClaude(prompt, "report");
-  return result ?? FALLBACK_GOV;
+  const result = await callBackend("/analyze", { type: "governance", events });
+  return result || FALLBACK_GOV;
 }
 
 export async function generateWeeklyReport(events: any[]): Promise<string> {
-  const eventSummary = events.slice(0, 5).map((e: any) =>
-    `• [${e?.source}] ${e?.svc}: ${e?.summary} (${e?.sev})`
-  ).join("\n") || "No recent events";
+  const result = await callBackend("/analyze", { type: "weekly", events });
+  return result || FALLBACK_WEEKLY;
+}
 
-  const prompt = `Generate a weekly delivery status report for the AbsoluteLabs platform team.
-
-Recent events:
-${eventSummary}
-
-Include: Delivery Status Summary (with RAG), Completed Work, In Progress, Blockers and Risks, Metrics Summary, Next Week Plan.`;
-
-  const result = await callClaude(prompt, "report");
-  return result ?? FALLBACK_WEEKLY;
+export async function generateZohoReport(): Promise<{ report: string; stats: any; usedMock: boolean }> {
+  try {
+    const res = await fetch(`${BACKEND}/zoho/report`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return {
+      report: data.report || FALLBACK_ZOHO,
+      stats: data.stats ?? null,
+      usedMock: data.usedMock ?? true,
+    };
+  } catch {
+    return { report: FALLBACK_ZOHO, stats: null, usedMock: true };
+  }
 }
