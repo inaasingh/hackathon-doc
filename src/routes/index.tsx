@@ -12,6 +12,7 @@ import { QuickReports } from "@/components/dashboard/QuickReports";
 import { DependencyGraph } from "@/components/dashboard/DependencyGraph";
 import { IntegrationHub } from "@/components/dashboard/IntegrationHub";
 import { MinecraftPlayground } from "@/components/dashboard/MinecraftPlayground";
+import { DashboardIntro } from "@/components/dashboard/DashboardIntro";
 import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
 import { mockEvents } from "@/data/mockEvents";
 import {
@@ -55,6 +56,7 @@ function Dashboard() {
   const [showRightPanel,     setShowRightPanel]     = useState(true);
   const [activeIntegration,  setActiveIntegration]  = useState<IntegrationId | undefined>(undefined);
   const [showPlayground,     setShowPlayground]     = useState(false);
+  const [showIntro,          setShowIntro]          = useState(true);
 
   useEffect(() => {
     if (dark) {
@@ -74,6 +76,9 @@ function Dashboard() {
 
   return (
     <>
+    {/* ── INTRO SCREEN ── */}
+    {showIntro && <DashboardIntro onEnter={() => setShowIntro(false)} />}
+
     <div
       className="flex h-screen overflow-hidden"
       style={{ background: "var(--background)" }}
