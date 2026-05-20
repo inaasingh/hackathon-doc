@@ -17,10 +17,22 @@ import type { IntegrationId } from "@/components/dashboard/IntegrationHub";
 import { mockEvents } from "@/data/mockEvents";
 import {
   Bell, Search, AlertCircle, CheckCircle2, Clock,
-  Sun, Moon, Gamepad2,
+  Sun, Moon, Gamepad2, ChevronDown, FolderOpen,
   PanelRightClose,
   PanelRightOpen,
 } from "lucide-react";
+
+const PROJECTS = [
+  "Barbour Support", "Bedrock", "Clarks Support Team", "FastMarkets",
+  "Fenwick Support Team", "FitFlop Support Team", "FootAsylum Support Team",
+  "Furniture Village", "Harbour Hotels", "Harvey Nichols", "Jewells Support",
+  "Lloyds Clinical", "LornaJane Support", "Managed Services Support",
+  "Millennium Hotels", "Mulberry Support Team", "Senior Management",
+  "Support Desk Manager", "Support Engineer", "Support Engineers1",
+  "Technical Team Lead", "Village Hotels", "White Cube Support",
+  "WhiteStuff Support Team", "Wolverine-Support Team", "Wren Kitchens",
+  "Yotel Support team",
+];
 
 const DEFAULT_EVENT = mockEvents[0];
 
@@ -57,6 +69,8 @@ function Dashboard() {
   const [activeIntegration,  setActiveIntegration]  = useState<IntegrationId | undefined>(undefined);
   const [showPlayground,     setShowPlayground]     = useState(false);
   const [showIntro,          setShowIntro]          = useState(true);
+  const [activeProject,      setActiveProject]      = useState<string>("Mulberry Support Team");
+  const [projectOpen,        setProjectOpen]        = useState(false);
 
   useEffect(() => {
     if (dark) {
@@ -100,6 +114,71 @@ function Dashboard() {
         >
           <h1 className="text-base font-semibold tracking-tight">Dashboard</h1>
           <div className="flex items-center gap-2">
+
+            {/* ── Project switcher dropdown ── */}
+            <div className="relative">
+              <button
+                onClick={() => setProjectOpen(p => !p)}
+                className="h-8 flex items-center gap-2 px-3 rounded-xl border transition hover:bg-secondary shadow-sm"
+                style={{
+                  background: dark ? "#1a162a" : "#ede8ff",
+                  borderColor: "rgba(124,110,245,0.25)",
+                  minWidth: 180,
+                }}
+              >
+                <FolderOpen className="h-3.5 w-3.5 shrink-0" style={{ color: "#9b8ff5" }} />
+                <span className="text-xs font-medium truncate flex-1 text-left" style={{ color: "var(--foreground)" }}>
+                  {activeProject}
+                </span>
+                <ChevronDown
+                  className="h-3 w-3 shrink-0 transition-transform"
+                  style={{ color: "#9b8ff5", transform: projectOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                />
+              </button>
+
+              {projectOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-30" onClick={() => setProjectOpen(false)} />
+                  {/* Dropdown */}
+                  <div
+                    className="absolute right-0 top-10 z-40 rounded-2xl shadow-2xl overflow-hidden"
+                    style={{
+                      width: 240,
+                      background: dark ? "#1a162a" : "#fff",
+                      border: "1px solid rgba(124,110,245,0.2)",
+                      maxHeight: 360,
+                      overflowY: "auto",
+                    }}
+                  >
+                    <div className="px-3 py-2 border-b" style={{ borderColor: "rgba(124,110,245,0.1)" }}>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#9b8ff5" }}>
+                        Select Project
+                      </p>
+                    </div>
+                    {PROJECTS.map(p => (
+                      <button
+                        key={p}
+                        onClick={() => { setActiveProject(p); setProjectOpen(false); }}
+                        className="w-full text-left px-4 py-2.5 text-xs transition flex items-center gap-2 hover:bg-secondary"
+                        style={{
+                          color: p === activeProject ? "#9b8ff5" : "var(--foreground)",
+                          background: p === activeProject ? "rgba(124,110,245,0.08)" : "transparent",
+                          fontWeight: p === activeProject ? 600 : 400,
+                        }}
+                      >
+                        <span
+                          className="h-1.5 w-1.5 rounded-full shrink-0"
+                          style={{ background: p === activeProject ? "#9b8ff5" : "transparent", border: "1px solid rgba(124,110,245,0.3)" }}
+                        />
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
             <span className="text-xs text-muted-foreground mr-1">{today}</span>
 
             {/* Dark / Light toggle */}
